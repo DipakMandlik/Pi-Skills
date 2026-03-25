@@ -1,0 +1,74 @@
+C:\Users\Dipak.Mandlik\Desktop\π-optimized\docs\tester\run_api_tests.py:227: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).
+  before = datetime.utcnow()
+
+🧪 Platform API Test Suite
+   Target: http://localhost:8000
+   Phase:  all
+✅ Server running at http://localhost:8000
+
+
+🔑 Setting up test tokens...
+
+  ✅ admin token obtained
+  ✅ user token obtained
+  ✅ viewer token obtained
+
+📋 AUTH Tests
+
+  ✅ [AUTH-001] Valid admin login returns 200 + admin role
+  ✅ [AUTH-003] Invalid password returns 401
+  ✅ [AUTH-004] Non-existent user returns 401
+  ✅ [AUTH-005] Empty body returns 4xx validation error
+  ✅ [AUTH-006] /auth/me with valid token returns user info
+  ✅ [AUTH-007] /auth/me without token returns 401
+  ✅ [AUTH-011] SQL injection in login email is rejected safely
+
+🔐 RBAC Matrix Tests
+
+  ✅ [RBAC-001] User cannot access POST /skills/assign
+  ✅ [RBAC-002] Viewer cannot access POST /skills/assign
+  ✅ [RBAC-003] User cannot access POST /skills/revoke
+  ✅ [RBAC-004] Viewer cannot access POST /skills/revoke
+  ✅ [RBAC-005] User cannot access POST /models/assign
+  ✅ [RBAC-006] Viewer cannot access POST /models/assign
+  ✅ [RBAC-007] User cannot access POST /models/revoke
+  ✅ [RBAC-008] Viewer cannot access POST /models/revoke
+  ✅ [RBAC-009] User cannot access GET /users
+  ✅ [RBAC-010] Viewer cannot access GET /users
+  ✅ [RBAC-BODY] Role claim in request body is ignored
+  ✅ [RBAC-HEADER] Role claim in custom header is ignored
+  ✅ [RBAC-NOTOKEN] Admin endpoint without token returns 401
+
+⚡ Execution Guard Tests
+
+  ✅ [EXEC-002] Unregistered model ID is rejected
+  ✅ [EXEC-012] Execute without JWT returns 401
+  ✅ [EXEC-014-0] Invalid input #0 does not cause 500
+  ✅ [EXEC-014-1] Invalid input #1 does not cause 500
+  ✅ [EXEC-014-2] Invalid input #2 does not cause 500
+  ✅ [EXEC-009-0] Prompt injection pattern #0 blocked
+  ✅ [EXEC-009-1] Prompt injection pattern #1 blocked
+  ✅ [EXEC-009-2] Prompt injection pattern #2 blocked
+
+🔒 JWT Security Tests
+
+  ✅ [SEC-001] JWT alg:none attack returns 401
+  ✅ [SEC-MALF-0] Malformed token #0 returns 4xx
+  ✅ [SEC-MALF-1] Malformed token #1 returns 4xx
+  ✅ [SEC-MALF-2] Malformed token #2 returns 4xx
+  ✅ [SEC-MALF-3] Malformed token #3 returns 4xx
+  ✅ [SEC-MALF-4] Malformed token #4 returns 4xx
+
+📊 Audit Log Tests
+
+  ✅ [LOG-009] /monitoring requires authentication
+
+============================================================
+  TEST RESULTS SUMMARY
+============================================================
+  Total:  35
+  Pass:   35 (100.0%)
+  Fail:   0
+============================================================
+
+📄 Results saved to results/

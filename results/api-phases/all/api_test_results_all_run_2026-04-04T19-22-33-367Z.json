@@ -1,0 +1,1192 @@
+[
+  {
+    "testId": "AUTH-001",
+    "title": "AUTH-001",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "200 with access_token and role:ADMIN/ORG_ADMIN",
+    "actual": "200 ORG_ADMIN",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:26.953Z"
+  },
+  {
+    "testId": "AUTH-003",
+    "title": "AUTH-003",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.420Z"
+  },
+  {
+    "testId": "AUTH-004",
+    "title": "AUTH-004",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.429Z"
+  },
+  {
+    "testId": "AUTH-005",
+    "title": "AUTH-005",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.438Z"
+  },
+  {
+    "testId": "AUTH-006",
+    "title": "Valid /auth/me",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "200 with user_id, email, role",
+    "actual": "200 fields:user_id,email,role,roles,display_name,allowed_models,allowed_skills,rbac_permissions,token_expires_at",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.444Z"
+  },
+  {
+    "testId": "AUTH-007",
+    "title": "AUTH-007",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.448Z"
+  },
+  {
+    "testId": "AUTH-011",
+    "title": "AUTH-011",
+    "module": "Auth",
+    "status": "PASS",
+    "expected": "401 or 422 (not 500)",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.459Z"
+  },
+  {
+    "testId": "RBAC-001",
+    "title": "RBAC-001",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.464Z"
+  },
+  {
+    "testId": "RBAC-002",
+    "title": "RBAC-002",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.469Z"
+  },
+  {
+    "testId": "RBAC-003",
+    "title": "RBAC-003",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.472Z"
+  },
+  {
+    "testId": "RBAC-004",
+    "title": "RBAC-004",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.475Z"
+  },
+  {
+    "testId": "RBAC-005",
+    "title": "RBAC-005",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.479Z"
+  },
+  {
+    "testId": "RBAC-006",
+    "title": "RBAC-006",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.484Z"
+  },
+  {
+    "testId": "RBAC-007",
+    "title": "RBAC-007",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.487Z"
+  },
+  {
+    "testId": "RBAC-008",
+    "title": "RBAC-008",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.490Z"
+  },
+  {
+    "testId": "RBAC-009",
+    "title": "RBAC-009",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.493Z"
+  },
+  {
+    "testId": "RBAC-010",
+    "title": "RBAC-010",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.498Z"
+  },
+  {
+    "testId": "RBAC-BODY",
+    "title": "RBAC-BODY",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.502Z"
+  },
+  {
+    "testId": "RBAC-HEADER",
+    "title": "RBAC-HEADER",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.506Z"
+  },
+  {
+    "testId": "RBAC-NOTOKEN",
+    "title": "RBAC-NOTOKEN",
+    "module": "RBAC",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.510Z"
+  },
+  {
+    "testId": "EXEC-002",
+    "title": "EXEC-002",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.607Z"
+  },
+  {
+    "testId": "EXEC-012",
+    "title": "EXEC-012",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.612Z"
+  },
+  {
+    "testId": "EXEC-014-0",
+    "title": "EXEC-014-0",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "4xx (not 500)",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.619Z"
+  },
+  {
+    "testId": "EXEC-014-1",
+    "title": "EXEC-014-1",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "4xx (not 500)",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.624Z"
+  },
+  {
+    "testId": "EXEC-014-2",
+    "title": "EXEC-014-2",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "4xx (not 500)",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.631Z"
+  },
+  {
+    "testId": "EXEC-014-3",
+    "title": "EXEC-014-3",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "4xx (not 500)",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.637Z"
+  },
+  {
+    "testId": "EXEC-009-0",
+    "title": "EXEC-009-0",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:27.819Z"
+  },
+  {
+    "testId": "EXEC-009-1",
+    "title": "EXEC-009-1",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.076Z"
+  },
+  {
+    "testId": "EXEC-009-2",
+    "title": "EXEC-009-2",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.235Z"
+  },
+  {
+    "testId": "EXEC-009-3",
+    "title": "EXEC-009-3",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.484Z"
+  },
+  {
+    "testId": "EXEC-009-4",
+    "title": "EXEC-009-4",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.758Z"
+  },
+  {
+    "testId": "EXEC-018",
+    "title": "EXEC-018",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.773Z"
+  },
+  {
+    "testId": "MOD-016",
+    "title": "MOD-016",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.783Z"
+  },
+  {
+    "testId": "MOD-017-0",
+    "title": "MOD-017-0",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.795Z"
+  },
+  {
+    "testId": "MOD-017-1",
+    "title": "MOD-017-1",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.802Z"
+  },
+  {
+    "testId": "MOD-017-2",
+    "title": "MOD-017-2",
+    "module": "ExecutionGuard",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.808Z"
+  },
+  {
+    "testId": "SEC-001",
+    "title": "SEC-001",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.815Z"
+  },
+  {
+    "testId": "SEC-MALF-0",
+    "title": "SEC-MALF-0",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.818Z"
+  },
+  {
+    "testId": "SEC-MALF-1",
+    "title": "SEC-MALF-1",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.823Z"
+  },
+  {
+    "testId": "SEC-MALF-2",
+    "title": "SEC-MALF-2",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.828Z"
+  },
+  {
+    "testId": "SEC-MALF-3",
+    "title": "SEC-MALF-3",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.837Z"
+  },
+  {
+    "testId": "SEC-MALF-4",
+    "title": "SEC-MALF-4",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.841Z"
+  },
+  {
+    "testId": "SEC-MALF-5",
+    "title": "SEC-MALF-5",
+    "module": "Security",
+    "status": "PASS",
+    "expected": "400 or 401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:28.844Z"
+  },
+  {
+    "testId": "LOG-001",
+    "title": "LOG-001",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.145Z"
+  },
+  {
+    "testId": "LOG-002",
+    "title": "LOG-002",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "Log entry with DENIED action",
+    "actual": "Actions: PROMPT_POLICY_VIOLATION,INJECTION_ATTEMPT_DETECTED,PROMPT_POLICY_VIOLATION,INJECTION_ATTEMPT_DETECTED,PROMPT_POLICY_VIOLATION,INJECTION_ATTEMPT_DETECTED,PROMPT_POLICY_VIOLATION,EXEC_FAILED",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.152Z"
+  },
+  {
+    "testId": "LOG-FIELDS",
+    "title": "LOG-FIELDS",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "All fields present",
+    "actual": "All present",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.156Z"
+  },
+  {
+    "testId": "MON-RBAC-ADMIN-SCOPE",
+    "title": "MON-RBAC-ADMIN-SCOPE",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.185Z"
+  },
+  {
+    "testId": "MON-RBAC-SELF-SCOPE",
+    "title": "MON-RBAC-SELF-SCOPE",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "200 with user-scoped logs",
+    "actual": "200 count:64",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.244Z"
+  },
+  {
+    "testId": "LOG-009",
+    "title": "LOG-009",
+    "module": "Monitoring",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.253Z"
+  },
+  {
+    "testId": "ADM-001",
+    "title": "ADM-001",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.275Z"
+  },
+  {
+    "testId": "ADM-001-RBAC",
+    "title": "ADM-001-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.281Z"
+  },
+  {
+    "testId": "ADM-002",
+    "title": "ADM-002",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.294Z"
+  },
+  {
+    "testId": "ADM-002-RBAC",
+    "title": "ADM-002-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.299Z"
+  },
+  {
+    "testId": "ADM-003",
+    "title": "ADM-003",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.309Z"
+  },
+  {
+    "testId": "ADM-003-RBAC",
+    "title": "ADM-003-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.314Z"
+  },
+  {
+    "testId": "ADM-004",
+    "title": "ADM-004",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.320Z"
+  },
+  {
+    "testId": "ADM-004-RBAC",
+    "title": "ADM-004-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.323Z"
+  },
+  {
+    "testId": "AI-001",
+    "title": "AI-001",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.328Z"
+  },
+  {
+    "testId": "AI-001-RBAC",
+    "title": "AI-001-RBAC",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.332Z"
+  },
+  {
+    "testId": "AI-002",
+    "title": "AI-002",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.337Z"
+  },
+  {
+    "testId": "AI-002-RBAC",
+    "title": "AI-002-RBAC",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.340Z"
+  },
+  {
+    "testId": "AI-003",
+    "title": "AI-003",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.355Z"
+  },
+  {
+    "testId": "AI-003-RBAC",
+    "title": "AI-003-RBAC",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.358Z"
+  },
+  {
+    "testId": "AI-004",
+    "title": "AI-004",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.381Z"
+  },
+  {
+    "testId": "AI-004-RBAC",
+    "title": "AI-004-RBAC",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.386Z"
+  },
+  {
+    "testId": "ADM-SUB-001",
+    "title": "ADM-SUB-001",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.486Z"
+  },
+  {
+    "testId": "ADM-SUB-001-NEG",
+    "title": "ADM-SUB-001-NEG",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.499Z"
+  },
+  {
+    "testId": "ADM-SUB-002",
+    "title": "ADM-SUB-002",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with matching plan_name",
+    "actual": "200 test-plan-mnkpyyvc",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.513Z"
+  },
+  {
+    "testId": "ADM-SUB-002-NEG",
+    "title": "ADM-SUB-002-NEG",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "404",
+    "actual": "404",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.524Z"
+  },
+  {
+    "testId": "ADM-SUB-003",
+    "title": "ADM-SUB-003",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with updated display_name",
+    "actual": "200 Plan mnkpyyvc Updated",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.633Z"
+  },
+  {
+    "testId": "ADM-SUB-004",
+    "title": "ADM-SUB-004",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with user_subscriptions array",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.650Z"
+  },
+  {
+    "testId": "ADM-SUB-005-RBAC",
+    "title": "ADM-SUB-005-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.658Z"
+  },
+  {
+    "testId": "ADM-SUB-005-NOAUTH",
+    "title": "ADM-SUB-005-NOAUTH",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.689Z"
+  },
+  {
+    "testId": "ADM-SUB-006",
+    "title": "ADM-SUB-006",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.828Z"
+  },
+  {
+    "testId": "ADM-FLG-001",
+    "title": "ADM-FLG-001",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.924Z"
+  },
+  {
+    "testId": "ADM-FLG-001-NEG",
+    "title": "ADM-FLG-001-NEG",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.937Z"
+  },
+  {
+    "testId": "ADM-FLG-002",
+    "title": "ADM-FLG-002",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with flags array",
+    "actual": "200 count:1",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:29.952Z"
+  },
+  {
+    "testId": "ADM-FLG-003",
+    "title": "ADM-FLG-003",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.019Z"
+  },
+  {
+    "testId": "ADM-FLG-003-RBAC",
+    "title": "ADM-FLG-003-RBAC",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.025Z"
+  },
+  {
+    "testId": "ADM-POL-001",
+    "title": "ADM-POL-001",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.129Z"
+  },
+  {
+    "testId": "ADM-POL-001-NEG",
+    "title": "ADM-POL-001-NEG",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "400",
+    "actual": "400",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.136Z"
+  },
+  {
+    "testId": "ADM-POL-002",
+    "title": "ADM-POL-002",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with allowed:boolean",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.151Z"
+  },
+  {
+    "testId": "ADM-POL-002-NEG",
+    "title": "ADM-POL-002-NEG",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "400 or 422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.158Z"
+  },
+  {
+    "testId": "ADM-POL-003",
+    "title": "ADM-POL-003",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 or 404",
+    "actual": "404",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.254Z"
+  },
+  {
+    "testId": "ADM-TOK-001",
+    "title": "ADM-TOK-001",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.308Z"
+  },
+  {
+    "testId": "ADM-TOK-002",
+    "title": "ADM-TOK-002",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "200 with logs array",
+    "actual": "200 count:0",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.335Z"
+  },
+  {
+    "testId": "ADM-TOK-002-NOAUTH",
+    "title": "ADM-TOK-002-NOAUTH",
+    "module": "Admin",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.339Z"
+  },
+  {
+    "testId": "AI-POST-001",
+    "title": "AI-POST-001",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200 with sanitized:string",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.351Z"
+  },
+  {
+    "testId": "AI-POST-002",
+    "title": "AI-POST-002",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200 with safe:boolean",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.375Z"
+  },
+  {
+    "testId": "AI-POST-003",
+    "title": "AI-POST-003",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.384Z"
+  },
+  {
+    "testId": "AI-GET-NEG-001",
+    "title": "AI-GET-NEG-001",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "422",
+    "actual": "422",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.390Z"
+  },
+  {
+    "testId": "AI-GET-NEG-002",
+    "title": "AI-GET-NEG-002",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.393Z"
+  },
+  {
+    "testId": "AI-POST-004-RBAC",
+    "title": "AI-POST-004-RBAC",
+    "module": "AI-Intelligence",
+    "status": "PASS",
+    "expected": "403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.397Z"
+  },
+  {
+    "testId": "GOV-001",
+    "title": "GOV-001",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "200 with valid:boolean or 403 denied",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.401Z"
+  },
+  {
+    "testId": "GOV-002",
+    "title": "GOV-002",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "200 or 403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.405Z"
+  },
+  {
+    "testId": "GOV-003",
+    "title": "GOV-003",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "200 with usage field or 403 denied",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.411Z"
+  },
+  {
+    "testId": "GOV-004",
+    "title": "GOV-004",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "400, 422, or 403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.416Z"
+  },
+  {
+    "testId": "GOV-006-NEG",
+    "title": "GOV-006-NEG",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "400, 422, or 403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.419Z"
+  },
+  {
+    "testId": "GOV-007-NEG",
+    "title": "GOV-007-NEG",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "422 or 403",
+    "actual": "403",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.423Z"
+  },
+  {
+    "testId": "GOV-005",
+    "title": "GOV-005",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.425Z"
+  },
+  {
+    "testId": "GOV-008-NEG",
+    "title": "GOV-008-NEG",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.428Z"
+  },
+  {
+    "testId": "GOV-009-NEG",
+    "title": "GOV-009-NEG",
+    "module": "Governance",
+    "status": "PASS",
+    "expected": "401",
+    "actual": "401",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.432Z"
+  },
+  {
+    "testId": "PERF-HEALTH-1",
+    "title": "PERF-HEALTH-1",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.441Z"
+  },
+  {
+    "testId": "PERF-HEALTH-2",
+    "title": "PERF-HEALTH-2",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.449Z"
+  },
+  {
+    "testId": "PERF-HEALTH-3",
+    "title": "PERF-HEALTH-3",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (8ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.457Z"
+  },
+  {
+    "testId": "PERF-HEALTH-4",
+    "title": "PERF-HEALTH-4",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.465Z"
+  },
+  {
+    "testId": "PERF-HEALTH-5",
+    "title": "PERF-HEALTH-5",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.472Z"
+  },
+  {
+    "testId": "PERF-HEALTH-6",
+    "title": "PERF-HEALTH-6",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (6ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.478Z"
+  },
+  {
+    "testId": "PERF-HEALTH-7",
+    "title": "PERF-HEALTH-7",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.487Z"
+  },
+  {
+    "testId": "PERF-HEALTH-8",
+    "title": "PERF-HEALTH-8",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (6ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.493Z"
+  },
+  {
+    "testId": "PERF-HEALTH-9",
+    "title": "PERF-HEALTH-9",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.500Z"
+  },
+  {
+    "testId": "PERF-HEALTH-10",
+    "title": "PERF-HEALTH-10",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (7ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.507Z"
+  },
+  {
+    "testId": "PERF-HEALTH-P95",
+    "title": "PERF-HEALTH-P95",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "p95 < 1500ms",
+    "actual": "avg=7ms, p95=7ms",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:30.507Z"
+  },
+  {
+    "testId": "PERF-LOGIN-1",
+    "title": "PERF-LOGIN-1",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (561ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:31.068Z"
+  },
+  {
+    "testId": "PERF-LOGIN-2",
+    "title": "PERF-LOGIN-2",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (589ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:31.658Z"
+  },
+  {
+    "testId": "PERF-LOGIN-3",
+    "title": "PERF-LOGIN-3",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (565ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:32.223Z"
+  },
+  {
+    "testId": "PERF-LOGIN-4",
+    "title": "PERF-LOGIN-4",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (589ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:32.813Z"
+  },
+  {
+    "testId": "PERF-LOGIN-5",
+    "title": "PERF-LOGIN-5",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "200",
+    "actual": "200 (549ms)",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:33.364Z"
+  },
+  {
+    "testId": "PERF-LOGIN-P95",
+    "title": "PERF-LOGIN-P95",
+    "module": "Performance",
+    "status": "PASS",
+    "expected": "p95 < 3000ms",
+    "actual": "p95=589ms",
+    "evidence": "",
+    "timestamp": "2026-04-04T19:22:33.365Z"
+  }
+]

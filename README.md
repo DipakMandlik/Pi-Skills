@@ -11,6 +11,10 @@ This repository now includes:
 
 View your app in AI Studio: https://ai.studio/apps/978c3c8d-5b8b-4493-816e-34e52b5d2d88
 
+## Detailed Project Documentation
+
+- End-to-end project and technology document: `docs/PROJECT_END_TO_END.md`
+
 ## Prerequisites
 
 - Node.js 20+
@@ -23,9 +27,11 @@ View your app in AI Studio: https://ai.studio/apps/978c3c8d-5b8b-4493-816e-34e52
    npm install
 
 2. Create your local env file:
-   copy .env.example .env.local
+   - PowerShell: `Copy-Item .env.example .env.local`
+   - Bash: `cp .env.example .env.local`
 
 3. Fill secrets in .env.local:
+   - JWT_SECRET (required, 64-char hex; generate with `python -c "import secrets; print(secrets.token_hex(32))"`)
    - GEMINI_API_KEY
    - SNOWFLAKE_ACCOUNT
    - SNOWFLAKE_USER
@@ -35,6 +41,8 @@ View your app in AI Studio: https://ai.studio/apps/978c3c8d-5b8b-4493-816e-34e52
    - SNOWFLAKE_DATABASE
    - SNOWFLAKE_SCHEMA
    - VITE_MCP_BASE_URL (default: http://localhost:5000)
+
+If `JWT_SECRET` is missing, the MCP server intentionally fails startup.
 
 4. Install MCP backend dependencies:
    npm run mcp:install
@@ -95,4 +103,49 @@ POST /mcp/call
     "schema": "PUBLIC"
   }
 }
+
+## Identity User Migration (No Placeholder Accounts)
+
+Use the admin migration script to provision only real users from your identity provider export.
+
+Script:
+
+`py -3.12 backend/scripts/migrate_identity_users.py --source <path-to-export> --provider <provider-name> --dry-run`
+
+Apps/API wrapper command (same migration workflow):
+
+`py -3.12 -m apps.api.scripts.migrate_identity_users --source <path-to-export> --provider <provider-name> --dry-run`
+
+Apply changes:
+
+`py -3.12 backend/scripts/migrate_identity_users.py --source <path-to-export> --provider <provider-name> --deactivate-missing`
+
+or via apps/api wrapper:
+
+`py -3.12 -m apps.api.scripts.migrate_identity_users --source <path-to-export> --provider <provider-name> --deactivate-missing`
+
+Supported input formats:
+
+- CSV
+- JSON (array of users or `{ "users": [...] }`)
+- JSONL
+
+Required fields per user:
+
+- `external_id` (or `id`)
+- `email`
+
+Optional fields:
+
+- `display_name` (or `name`)
+- `platform_role` (or `role`)
+- `is_active`
+
+Safety guarantees:
+
+- Blocks placeholder/test email domains (`*.local`, `example.com`, etc.)
+- Validates roles against platform RBAC
+- Upserts by `external_id`/`email`
+- Can deactivate identity-managed users missing from latest export
+- Never bootstraps local placeholder accounts
 

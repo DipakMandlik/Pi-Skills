@@ -1,0 +1,15 @@
+{
+  "generated_at": "2026-04-04T19:22:33.375Z",
+  "phase": "all",
+  "tag": "run",
+  "totals": {
+    "total": 119,
+    "pass": 119,
+    "fail": 0,
+    "pass_rate": 100
+  },
+  "artifacts": {
+    "result_json": "results\\api-phases\\all\\api_test_results_all_run_2026-04-04T19-22-33-367Z.json",
+    "report_md": "results\\api-phases\\all\\api_validation_report_all_run_2026-04-04T19-22-33-367Z.md"
+  }
+}

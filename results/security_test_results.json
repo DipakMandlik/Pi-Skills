@@ -1,0 +1,178 @@
+[
+  {
+    "vector": "SEC-001",
+    "description": "JWT alg:none",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-002",
+    "description": "JWT role tamper",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-003",
+    "description": "JWT expired token",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-004",
+    "description": "JWT wrong secret",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-006a",
+    "description": "Malformed token SEC-006a",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-006b",
+    "description": "Malformed token SEC-006b",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "SEC-006c",
+    "description": "Malformed token SEC-006c",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "RBAC-007",
+    "description": "Role in request body",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "RBAC-008",
+    "description": "Role in custom header",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "RBAC-010",
+    "description": "Admin endpoint no token",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "RBAC-012",
+    "description": "Viewer execution attempt",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-013",
+    "description": "Model spoofing (unpermitted)",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-014",
+    "description": "Unicode homoglyph spoofing",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-015a",
+    "description": "Null model_id",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-015b",
+    "description": "Empty model_id",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-016",
+    "description": "Model field omission",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "MOD-017",
+    "description": "Model ID path traversal",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  },
+  {
+    "vector": "SQL-011",
+    "description": "SQL injection in login",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "SQL-012",
+    "description": "SQL injection in model_id",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "CRITICAL",
+    "bugId": ""
+  },
+  {
+    "vector": "XSS-014",
+    "description": "XSS in skill_id",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "MEDIUM",
+    "bugId": ""
+  },
+  {
+    "vector": "LEAK-016",
+    "description": "Stack trace in error",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "MEDIUM",
+    "bugId": ""
+  },
+  {
+    "vector": "LEAK-020",
+    "description": "Monitoring user isolation",
+    "attempted": true,
+    "result": "BLOCKED",
+    "severity": "HIGH",
+    "bugId": ""
+  }
+]

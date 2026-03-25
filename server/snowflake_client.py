@@ -16,8 +16,9 @@ class SnowflakeClientUnavailableError(RuntimeError):
 
 
 class SnowflakeClient:
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, runtime_credentials: dict[str, Any] | None = None) -> None:
         self.settings = settings
+        self.runtime_credentials = runtime_credentials or {}
         self._connection: Any | None = None
         self._connection_lock = threading.RLock()
         self._query_lock = threading.RLock()
@@ -48,14 +49,21 @@ class SnowflakeClient:
 
     def _create_connection(self) -> Any:
         connector = self._load_connector()
+        account = self.runtime_credentials.get("account") or self.settings.snowflake_account
+        user = self.runtime_credentials.get("username") or self.settings.snowflake_user
+        password = self.runtime_credentials.get("password") or self.settings.snowflake_password
+        role = self.runtime_credentials.get("role") or self.settings.snowflake_role
+        warehouse = self.runtime_credentials.get("warehouse") or self.settings.snowflake_warehouse
+        database = self.runtime_credentials.get("database") or self.settings.snowflake_database
+        schema = self.runtime_credentials.get("schema") or self.settings.snowflake_schema
         return connector.connect(
-            account=self.settings.snowflake_account,
-            user=self.settings.snowflake_user,
-            password=self.settings.snowflake_password,
-            role=self.settings.snowflake_role,
-            warehouse=self.settings.snowflake_warehouse,
-            database=self.settings.snowflake_database,
-            schema=self.settings.snowflake_schema,
+            account=account,
+            user=user,
+            password=password,
+            role=role,
+            warehouse=warehouse,
+            database=database,
+            schema=schema,
             login_timeout=10,
             network_timeout=self.settings.sql_timeout_seconds,
             client_session_keep_alive=True,
@@ -87,14 +95,17 @@ class SnowflakeClient:
             self._reset_connection()
             raise
 
-    def execute_query(self, query: str) -> dict[str, Any]:
+    def execute_query(self, query: str, params: Any | None = None) -> dict[str, Any]:
         last_error: Exception | None = None
         for _attempt in range(2):
             try:
                 with self.get_connection() as conn:
                     with self._query_lock:
                         with conn.cursor() as cursor:
-                            cursor.execute(query)
+                            if params is None:
+                                cursor.execute(query)
+                            else:
+                                cursor.execute(query, params)
                             columns = [col[0] for col in cursor.description] if cursor.description else []
                             rows = cursor.fetchall() if columns else []
                             return {

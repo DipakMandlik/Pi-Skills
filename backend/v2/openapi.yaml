@@ -1,0 +1,787 @@
+openapi: 3.0.3
+info:
+  title: AI Skill Management Platform
+  version: 2.0.0
+  description: Multi-tenant SaaS for creating, managing, assigning, and executing AI skills
+servers:
+  - url: http://localhost:8000
+    description: Local development
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags: [System]
+      responses:
+        '200':
+          description: Service healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, enum: [ok, degraded] }
+                  database: { type: string, enum: [connected, disconnected] }
+                  uptime: { type: integer }
+
+  /api/auth/login:
+    post:
+      summary: Login with email and password
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 6 }
+      responses:
+        '201':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/refresh:
+    post:
+      summary: Refresh access token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/auth/logout:
+    post:
+      summary: Logout and revoke refresh token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        '200':
+          description: Logged out
+
+  /api/auth/forgot-password:
+    post:
+      summary: Request password reset email
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '200':
+          description: Reset email sent (if user exists)
+
+  /api/auth/reset-password:
+    post:
+      summary: Reset password with token
+      tags: [Auth]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, minLength: 8 }
+      responses:
+        '200':
+          description: Password reset successful
+
+  /api/auth/me:
+    get:
+      summary: Get current user profile
+      tags: [Auth]
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/skills:
+    get:
+      summary: List skills (paginated, filtered)
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1, minimum: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20, minimum: 1, maximum: 100 } }
+        - { name: search, in: query, schema: { type: string, default: "" } }
+        - { name: category, in: query, schema: { type: string, default: "" } }
+        - { name: status, in: query, schema: { type: string, default: "" } }
+      responses:
+        '200':
+          description: Paginated skills list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedResponse'
+    post:
+      summary: Create a new skill
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 255 }
+                description: { type: string, maxLength: 5000 }
+                content: { type: string, maxLength: 50000 }
+                category: { type: string, default: general }
+      responses:
+        '201':
+          description: Skill created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/skills/{skill_id}:
+    get:
+      summary: Get skill by ID
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Skill detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Full update skill (admin)
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                content: { type: string }
+                category: { type: string }
+      responses:
+        '200':
+          description: Skill updated
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    patch:
+      summary: Partial update skill (admin)
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+                content: { type: string }
+                category: { type: string }
+      responses:
+        '200':
+          description: Skill patched
+    delete:
+      summary: Soft delete skill (admin)
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Skill deleted
+
+  /api/skills/{skill_id}/versions:
+    get:
+      summary: Get skill version history
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Version history
+
+  /api/skills/{skill_id}/publish:
+    post:
+      summary: Publish draft skill to active (admin)
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Skill published
+
+  /api/skills/{skill_id}/duplicate:
+    post:
+      summary: Clone a skill
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '201':
+          description: Skill duplicated
+
+  /api/skills/{skill_id}/assignments:
+    get:
+      summary: Get who this skill is assigned to
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Assignment list
+
+  /api/skills/{skill_id}/test:
+    post:
+      summary: Run skill in preview mode
+      tags: [Skills]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                input_data: { type: object }
+      responses:
+        '200':
+          description: Test execution result
+
+  /api/users:
+    get:
+      summary: List organization users (paginated)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: search, in: query, schema: { type: string } }
+        - { name: role, in: query, schema: { type: string } }
+        - { name: status, in: query, schema: { type: string } }
+      responses:
+        '200':
+          description: Paginated users list
+
+  /api/users/{user_id}:
+    get:
+      summary: Get user profile
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: User detail
+    patch:
+      summary: Update user (admin)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                role: { type: string, enum: [OWNER, ADMIN, MEMBER, VIEWER] }
+                status: { type: string, enum: [active, inactive] }
+      responses:
+        '200':
+          description: User updated
+    delete:
+      summary: Deactivate user (admin)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: User deactivated
+
+  /api/users/{user_id}/skills:
+    get:
+      summary: Get skills assigned to user
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: User skills list
+    post:
+      summary: Assign skills to user (admin)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skill_ids]
+              properties:
+                skill_ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '201':
+          description: Skills assigned
+
+  /api/users/{user_id}/skills/{skill_id}:
+    delete:
+      summary: Remove skill from user (admin)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: skill_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Skill removed
+
+  /api/users/invite:
+    post:
+      summary: Invite user by email (admin)
+      tags: [Users]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+                role: { type: string, default: MEMBER }
+      responses:
+        '201':
+          description: Invitation created
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/teams:
+    get:
+      summary: List teams (paginated)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        '200':
+          description: Paginated teams list
+    post:
+      summary: Create team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 255 }
+                description: { type: string, maxLength: 5000 }
+      responses:
+        '201':
+          description: Team created
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /api/teams/{team_id}:
+    get:
+      summary: Get team detail
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Team detail
+    patch:
+      summary: Update team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                description: { type: string }
+      responses:
+        '200':
+          description: Team updated
+    delete:
+      summary: Delete team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Team deleted
+
+  /api/teams/{team_id}/members:
+    post:
+      summary: Add members to team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_ids]
+              properties:
+                user_ids: { type: array, items: { type: string, format: uuid }, minItems: 1 }
+      responses:
+        '201':
+          description: Members added
+
+  /api/teams/{team_id}/members/{user_id}:
+    delete:
+      summary: Remove member from team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: user_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Member removed
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /api/teams/{team_id}/skills:
+    get:
+      summary: Get skills assigned to team
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Team skills list
+    post:
+      summary: Assign skills to team (admin)
+      tags: [Teams]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: team_id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skill_ids]
+              properties:
+                skill_ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '201':
+          description: Skills assigned to team
+
+  /api/org:
+    get:
+      summary: Get organization profile
+      tags: [Organizations]
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Organization profile
+    patch:
+      summary: Update organization settings (admin)
+      tags: [Organizations]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                plan: { type: string }
+      responses:
+        '200':
+          description: Organization updated
+
+  /api/org/stats:
+    get:
+      summary: Get organization dashboard stats
+      tags: [Organizations]
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: Organization statistics
+
+  /api/org/activity:
+    get:
+      summary: Get organization activity feed (paginated)
+      tags: [Organizations]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+      responses:
+        '200':
+          description: Activity feed
+
+  /api/assignments:
+    post:
+      summary: Bulk assign skills to users/teams
+      tags: [Assignments]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skill_id, assignee_type, assignee_id]
+              properties:
+                skill_id: { type: string, format: uuid }
+                assignee_type: { type: string, enum: [user, team, org] }
+                assignee_id: { type: string, format: uuid }
+                expires_at: { type: string, format: date-time }
+      responses:
+        '201':
+          description: Assignment created
+    delete:
+      summary: Bulk unassign skills
+      tags: [Assignments]
+      security: [{ BearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [skill_id, assignee_type, assignee_id]
+              properties:
+                skill_id: { type: string, format: uuid }
+                assignee_type: { type: string }
+                assignee_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Assignments removed
+    get:
+      summary: List all assignments with filters (paginated)
+      tags: [Assignments]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: page, in: query, schema: { type: integer, default: 1 } }
+        - { name: page_size, in: query, schema: { type: integer, default: 20 } }
+        - { name: skill_id, in: query, schema: { type: string, format: uuid } }
+        - { name: assignee_type, in: query, schema: { type: string } }
+        - { name: assignee_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Paginated assignments list
+
+  /api/analytics/skills/usage:
+    get:
+      summary: Most used skills over time period
+      tags: [Analytics]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: days, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Skill usage metrics
+
+  /api/analytics/skills/errors:
+    get:
+      summary: Error rate per skill
+      tags: [Analytics]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: days, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Skill error rates
+
+  /api/analytics/users/activity:
+    get:
+      summary: User activity metrics
+      tags: [Analytics]
+      security: [{ BearerAuth: [] }]
+      responses:
+        '200':
+          description: User activity metrics
+
+  /api/analytics/trends:
+    get:
+      summary: Creation/usage trends for charts
+      tags: [Analytics]
+      security: [{ BearerAuth: [] }]
+      parameters:
+        - { name: days, in: query, schema: { type: integer, default: 30 } }
+      responses:
+        '200':
+          description: Trend data
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: AUTHENTICATION_ERROR
+              message: Missing or invalid authorization header
+    Forbidden:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: AUTHORIZATION_ERROR
+              message: Admin role required
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: NOT_FOUND
+              message: Skill not found
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            success: false
+            error:
+              code: CONFLICT
+              message: A skill with this name already exists
+  schemas:
+    SuccessResponse:
+      type: object
+      required: [success, data]
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: object }
+        meta:
+          type: object
+          properties:
+            page: { type: integer }
+            total: { type: integer }
+            per_page: { type: integer }
+            total_pages: { type: integer }
+    ErrorResponse:
+      type: object
+      required: [success, error]
+      properties:
+        success: { type: boolean, example: false }
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string }
+            message: { type: string }
+            details: { type: array, items: { type: string } }
+    PaginatedResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data: { type: array, items: { type: object } }
+        meta:
+          type: object
+          properties:
+            page: { type: integer }
+            total: { type: integer }
+            per_page: { type: integer }
+            total_pages: { type: integer }

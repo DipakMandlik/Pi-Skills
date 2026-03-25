@@ -1,0 +1,6 @@
+
+🧪 Platform API Test Suite
+   Target: http://localhost:8000
+   Phase:  auth
+❌ Health check failed: 0
+   Make sure backend is running: py -m backend.main

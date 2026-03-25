@@ -1,0 +1,63 @@
+name: startup-security-gate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  startup-security-gate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r server/requirements.txt
+          python -m pip install pytest pytest-asyncio
+
+      - name: Run startup and JWT contract gates
+        run: |
+          python -m pytest \
+            apps/mcp/tests/test_server_main_security.py::test_startup_checks_reject_weak_jwt_secret \
+            apps/mcp/tests/test_server_main_security.py::test_startup_checks_reject_missing_jwt_secret \
+            apps/mcp/tests/test_server_main_security.py::test_startup_checks_reject_placeholder_jwt_secret \
+            apps/mcp/tests/test_server_main_security.py::test_startup_checks_emit_structured_remediation_messages \
+            apps/mcp/tests/test_apps_mcp_startup_security.py::test_apps_mcp_startup_checks_reject_weak_jwt_secret \
+            apps/mcp/tests/test_apps_mcp_startup_security.py::test_apps_mcp_startup_checks_reject_missing_jwt_secret \
+            apps/mcp/tests/test_apps_mcp_startup_security.py::test_apps_mcp_startup_checks_reject_placeholder_jwt_secret \
+            apps/mcp/tests/test_apps_mcp_startup_security.py::test_apps_mcp_startup_checks_emit_structured_remediation_messages \
+            -q
+
+  python-unit-tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r server/requirements.txt
+          python -m pip install -r backend/requirements.txt
+          python -m pip install pytest pytest-asyncio
+
+      - name: Run full Python unit test suite
+        run: |
+          python -m pytest apps/api/tests apps/mcp/tests -q

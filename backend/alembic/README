@@ -1,0 +1,7 @@
+Alembic migration environment for backend service.
+
+Usage:
+1. Install deps: py -3.12 -m pip install -r backend/requirements.txt
+2. Generate revision: py -3.12 -m alembic -c alembic.ini revision --autogenerate -m "message"
+3. Upgrade DB: py -3.12 -m alembic -c alembic.ini upgrade head
+4. Downgrade one step: py -3.12 -m alembic -c alembic.ini downgrade -1

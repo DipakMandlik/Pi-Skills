@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>π Accelerator — Detailed Implementation Plan</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,700;9..144,900&family=Inter:wght@300;400;500;600&display=swap');
+
+:root {
+  --bg:       #05080d;
+  --s1:       #0a1018;
+  --s2:       #0f1825;
+  --s3:       #141f30;
+  --border:   #1c2d42;
+  --border2:  #243854;
+  --text:     #b8cce0;
+  --muted:    #4a6882;
+  --dim:      #2a4460;
+
+  --snow:  #29b5e8;   /* Snowflake blue  */
+  --dbt:   #ff694a;   /* dbt orange      */
+  --ai:    #9b72ff;   /* AI purple       */
+  --ops:   #26d97f;   /* Ops green       */
+  --gen:   #f5c842;   /* General gold    */
+
+  --white: #e8f0f8;
+
+  --ff-head: 'Fraunces', serif;
+  --ff-mono: 'IBM Plex Mono', monospace;
+  --ff-body: 'Inter', sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--ff-body);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* noise */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.025'/%3E%3C/svg%3E");
+  pointer-events: none; z-index: 0;
+}
+
+/* ─── NAV ─────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 200;
+  background: rgba(5,8,13,.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center;
+  padding: 0 1.5rem; height: 52px; gap: 0;
+  overflow-x: auto;
+}
+.nav-brand {
+  font-family: var(--ff-mono);
+  font-size: .8rem; font-weight: 700;
+  color: var(--snow);
+  white-space: nowrap;
+  margin-right: 2rem;
+  text-decoration: none;
+  letter-spacing: .05em;
+}
+.nav-tab {
+  font-family: var(--ff-mono);
+  font-size: .62rem; letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding: 0 1rem; height: 52px;
+  display: flex; align-items: center;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  white-space: nowrap;
+  transition: color .15s, border-color .15s;
+}
+.nav-tab:hover { color: var(--text); }
+.nav-tab.snow { border-color: var(--snow); color: var(--snow); }
+.nav-tab.dbt  { border-color: var(--dbt);  color: var(--dbt);  }
+.nav-tab.ai   { border-color: var(--ai);   color: var(--ai);   }
+.nav-tab.ops  { border-color: var(--ops);  color: var(--ops);  }
+.nav-tab.gen  { border-color: var(--gen);  color: var(--gen);  }
+
+/* ─── HERO ────────────────────────────── */
+.hero {
+  position: relative;
+  padding: 6rem 2rem 5rem;
+  overflow: hidden;
+}
+.hero-bg {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(ellipse 60% 50% at 20% 50%, rgba(41,181,232,.06) 0%, transparent 70%),
+    radial-gradient(ellipse 40% 60% at 80% 30%, rgba(155,114,255,.05) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-inner { max-width: 1100px; margin: 0 auto; position: relative; }
+
+.hero-kicker {
+  font-family: var(--ff-mono);
+  font-size: .65rem; letter-spacing: .3em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1.25rem;
+  display: flex; align-items: center; gap: .75rem;
+}
+.hero-kicker::before {
+  content: '';
+  width: 28px; height: 1px;
+  background: var(--snow);
+}
+
+.hero-h1 {
+  font-family: var(--ff-head);
+  font-size: clamp(2.4rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.05;
+  letter-spacing: -.02em;
+  color: var(--white);
+  margin-bottom: 1.5rem;
+}
+.hero-h1 em { font-style: normal; color: var(--snow); }
+
+.hero-lead {
+  max-width: 680px;
+  font-size: .95rem;
+  color: var(--muted);
+  line-height: 1.85;
+  margin-bottom: 2.5rem;
+}
+
+.domain-pills {
+  display: flex; flex-wrap: wrap; gap: .5rem;
+  margin-bottom: 3rem;
+}
+.dp {
+  font-family: var(--ff-mono);
+  font-size: .6rem; letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .3rem .9rem;
+  border-radius: 2px;
+  border: 1px solid;
+  white-space: nowrap;
+}
+.dp-snow { color: var(--snow); border-color: rgba(41,181,232,.35); background: rgba(41,181,232,.06); }
+.dp-dbt  { color: var(--dbt);  border-color: rgba(255,105,74,.35);  background: rgba(255,105,74,.06); }
+.dp-ai   { color: var(--ai);   border-color: rgba(155,114,255,.35); background: rgba(155,114,255,.06); }
+.dp-ops  { color: var(--ops);  border-color: rgba(38,217,127,.35);  background: rgba(38,217,127,.06); }
+.dp-gen  { color: var(--gen);  border-color: rgba(245,200,66,.35);  background: rgba(245,200,66,.06); }
+
+.stat-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  max-width: 900px;
+}
+.stat-box {
+  background: var(--s1);
+  padding: 1.25rem 1.5rem;
+}
+.stat-num {
+  font-family: var(--ff-head);
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+  margin-bottom: .25rem;
+}
+.stat-label {
+  font-family: var(--ff-mono);
+  font-size: .58rem;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--muted);
+}
+
+/* ─── LAYOUT ──────────────────────────── */
+.page { max-width: 1280px; margin: 0 auto; padding: 0 1.5rem; }
+
+/* ─── DOMAIN SECTION ──────────────────── */
+.domain-section { padding: 5rem 0; border-top: 1px solid var(--border); }
+
+.domain-header {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2rem;
+  align-items: start;
+  margin-bottom: 3.5rem;
+}
+.domain-num {
+  font-family: var(--ff-mono);
+  font-size: .65rem; letter-spacing: .2em;
+  color: var(--muted);
+  padding-top: .4rem;
+  white-space: nowrap;
+}
+.domain-title {
+  font-family: var(--ff-head);
+  font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+  font-weight: 900;
+  color: var(--white);
+  letter-spacing: -.02em;
+  line-height: 1.1;
+  margin-bottom: .75rem;
+}
+.domain-title span { display: block; }
+.domain-desc {
+  font-size: .88rem;
+  color: var(--muted);
+  max-width: 640px;
+  line-height: 1.8;
+}
+
+/* ─── CAPABILITY BLOCK ────────────────── */
+.cap-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  margin-bottom: 3rem;
+}
+
+.cap-card {
+  background: var(--s1);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cap-card-head {
+  padding: 1.5rem 1.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.cap-title {
+  font-family: var(--ff-head);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--white);
+  line-height: 1.3;
+}
+
+.status-tag {
+  font-family: var(--ff-mono);
+  font-size: .55rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  padding: .2rem .55rem;
+  border-radius: 2px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.st-new    { background: rgba(255,105,74,.15); color: var(--dbt); }
+.st-ext    { background: rgba(38,217,127,.12); color: var(--ops); }
+.st-exists { background: rgba(41,181,232,.12); color: var(--snow); }
+
+.cap-card-body { padding: 1.25rem 1.75rem; flex: 1; }
+.cap-card-body p {
+  font-size: .82rem;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 1rem;
+}
+
+/* ─── IMPL ROWS ───────────────────────── */
+.impl-section-title {
+  font-family: var(--ff-mono);
+  font-size: .6rem;
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  color: var(--dim);
+  margin-bottom: .6rem;
+}
+
+.impl-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin-bottom: 1rem;
+}
+
+.impl-row {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: .6rem;
+  padding: .35rem 0;
+  border-top: 1px solid rgba(28,45,66,.6);
+  align-items: start;
+}
+.impl-row:first-child { border-top: none; }
+
+.impl-bullet {
+  width: 5px; height: 5px;
+  border-radius: 50%;
+  margin-top: .45rem;
+  flex-shrink: 0;
+}
+
+.impl-text {
+  font-size: .78rem;
+  color: var(--text);
+  line-height: 1.55;
+}
+
+.impl-text code {
+  font-family: var(--ff-mono);
+  font-size: .7rem;
+  background: var(--s3);
+  border: 1px solid var(--border2);
+  padding: .05rem .35rem;
+  border-radius: 2px;
+  color: var(--white);
+}
+
+/* ─── SKILL / TOOL CHIPS ──────────────── */
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .4rem;
+  margin-bottom: .75rem;
+}
+.chip {
+  font-family: var(--ff-mono);
+  font-size: .6rem;
+  padding: .2rem .6rem;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+  color: var(--muted);
+  background: rgba(255,255,255,.02);
+}
+.chip.new { border-color: rgba(255,105,74,.4); color: var(--dbt); background: rgba(255,105,74,.04); }
+.chip.exists { border-color: rgba(41,181,232,.35); color: var(--snow); background: rgba(41,181,232,.04); }
+
+/* ─── MCP TOOLS TABLE ─────────────────── */
+.tools-section {
+  margin-bottom: 3rem;
+}
+.tools-title {
+  font-family: var(--ff-mono);
+  font-size: .65rem;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.tools-title::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: var(--border);
+}
+
+.tool-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .78rem;
+}
+.tool-table th {
+  font-family: var(--ff-mono);
+  font-size: .58rem;
+  letter-spacing: .15em;
+  text-transform: uppercase;
+  color: var(--dim);
+  padding: .5rem .75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  background: var(--s2);
+}
+.tool-table td {
+  padding: .6rem .75rem;
+  border-bottom: 1px solid rgba(28,45,66,.4);
+  color: var(--text);
+  vertical-align: top;
+}
+.tool-table tr:hover td { background: rgba(255,255,255,.01); }
+.tool-table code {
+  font-family: var(--ff-mono);
+  font-size: .68rem;
+  color: var(--white);
+  background: var(--s3);
+  padding: .05rem .3rem;
+  border: 1px solid var(--border2);
+  border-radius: 2px;
+}
+.tool-table td:last-child { color: var(--muted); font-size: .74rem; }
+
+/* ─── SPRINT TABLE ────────────────────── */
+.sprint-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+}
+.sprint-cell {
+  background: var(--s1);
+  padding: 1.75rem;
+}
+.sprint-head {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  margin-bottom: 1.25rem;
+}
+.sprint-badge {
+  font-family: var(--ff-mono);
+  font-size: .58rem;
+  padding: .2rem .55rem;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.sprint-name {
+  font-family: var(--ff-head);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--white);
+}
+.sprint-items { display: flex; flex-direction: column; gap: .5rem; }
+.sprint-item {
+  font-size: .78rem;
+  color: var(--muted);
+  display: flex;
+  gap: .5rem;
+  align-items: flex-start;
+  line-height: 1.5;
+}
+.sprint-item::before {
+  content: '›';
+  color: var(--snow);
+  flex-shrink: 0;
+  font-size: .8rem;
+}
+.sprint-goal {
+  margin-top: 1rem;
+  padding: .75rem;
+  background: rgba(41,181,232,.05);
+  border-left: 2px solid var(--snow);
+  font-family: var(--ff-mono);
+  font-size: .65rem;
+  color: var(--snow);
+  line-height: 1.5;
+}
+
+/* ─── ARCH DIAGRAM ────────────────────── */
+.arch-block {
+  background: var(--s1);
+  border: 1px solid var(--border);
+  padding: 2rem 2.5rem;
+  margin-bottom: 3rem;
+  font-family: var(--ff-mono);
+}
+.arch-row {
+  display: flex;
+  gap: 1.5rem;
+  align-items: flex-start;
+  padding: 1rem 0;
+  border-bottom: 1px dashed var(--border);
+}
+.arch-row:last-child { border-bottom: none; }
+.arch-layer-name {
+  font-size: .6rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: .15em;
+  min-width: 130px;
+  padding-top: .15rem;
+  flex-shrink: 0;
+}
+.arch-items-row { display: flex; flex-wrap: wrap; gap: .4rem; }
+.ai-box {
+  font-size: .63rem;
+  padding: .25rem .7rem;
+  border: 1px solid var(--border2);
+  color: var(--text);
+}
+.ai-box.snow { border-color: rgba(41,181,232,.4);  color: var(--snow); background: rgba(41,181,232,.04); }
+.ai-box.dbt  { border-color: rgba(255,105,74,.4);  color: var(--dbt);  background: rgba(255,105,74,.04); }
+.ai-box.ai   { border-color: rgba(155,114,255,.4); color: var(--ai);   background: rgba(155,114,255,.04); }
+.ai-box.ops  { border-color: rgba(38,217,127,.4);  color: var(--ops);  background: rgba(38,217,127,.04); }
+.ai-box.gen  { border-color: rgba(245,200,66,.4);  color: var(--gen);  background: rgba(245,200,66,.04); }
+.ai-box.new  { border-color: rgba(255,105,74,.5);  color: var(--dbt);  background: rgba(255,105,74,.06); font-style: italic; }
+.ai-box.exists { border-color: rgba(41,181,232,.35); color: var(--snow); }
+
+/* ─── DIVIDER ─────────────────────────── */
+.divider {
+  font-family: var(--ff-mono);
+  font-size: .6rem;
+  color: var(--dim);
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  padding: 1rem 0;
+  border-top: 1px solid var(--border);
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+}
+.divider::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: var(--border);
+}
+
+/* ─── FOOTER ──────────────────────────── */
+.footer {
+  border-top: 1px solid var(--border);
+  padding: 3rem 1.5rem;
+  text-align: center;
+  font-family: var(--ff-mono);
+  font-size: .62rem;
+  color: var(--dim);
+  letter-spacing: .1em;
+}
+.footer strong { color: var(--snow); }
+
+@media (max-width:640px) {
+  .domain-header { grid-template-columns: 1fr; }
+  .arch-row { flex-direction: column; }
+  .arch-layer-name { min-width: auto; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-brand" href="#">π ACCELERATOR</a>
+  <a class="nav-tab snow" href="#snowflake">Snowflake &amp; Data</a>
+  <a class="nav-tab dbt"  href="#development">Development</a>
+  <a class="nav-tab ai"   href="#aiml">AI &amp; ML</a>
+  <a class="nav-tab ops"  href="#operations">Operations</a>
+  <a class="nav-tab gen"  href="#general">General</a>
+  <a class="nav-tab"      href="#architecture">Architecture</a>
+  <a class="nav-tab"      href="#sprints">Sprints</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-inner">
+    <div class="hero-kicker">Implementation Plan v2.0 &mdash; Complete Capability Matrix</div>
+    <h1 class="hero-h1">
+      <em>π Accelerator</em>
+      <span>Implementation Blueprint</span>
+    </h1>
+    <p class="hero-lead">
+      A complete, phase-by-phase engineering plan for every capability domain — Snowflake &amp; Data, Development, AI &amp; ML, Operations, and General workflows. Every feature defined with its MCP tools, skill files, UI components, and backend services.
+    </p>
+    <div class="domain-pills">
+      <span class="dp dp-snow">Snowflake &amp; Data</span>
+      <span class="dp dp-dbt">Development</span>
+      <span class="dp dp-ai">AI &amp; ML</span>
+      <span class="dp dp-ops">Operations</span>
+      <span class="dp dp-gen">General</span>
+    </div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--snow)">5</div>
+        <div class="stat-label">Capability Domains</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--dbt)">27</div>
+        <div class="stat-label">Feature Modules</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--ai)">38</div>
+        <div class="stat-label">New MCP Tools</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--ops)">22</div>
+        <div class="stat-label">Skill Files</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-num" style="color:var(--gen)">8</div>
+        <div class="stat-label">Sprints</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════════════
+     DOMAIN 1: SNOWFLAKE & DATA
+═══════════════════════════════════════════════════════════════ -->
+<div class="page">
+<section class="domain-section" id="snowflake">
+  <div class="domain-header">
+    <div class="domain-num" style="color:var(--snow)">01 / 05</div>
+    <div>
+      <h2 class="domain-title" style="color:var(--snow)">Snowflake &amp; Data</h2>
+      <p class="domain-desc">The core data platform layer — querying, exploration, marketplace, semantic models, Cortex Analyst, governance, lineage, data quality, and cost analysis. This domain extends the existing SQL workspace into a complete Snowflake operating environment.</p>
+    </div>
+  </div>
+
+  <div class="cap-grid">
+
+    <!-- 1.1 SQL Queries -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Write, Validate &amp; Execute SQL Queries</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>The foundation already exists. Enhancement adds multi-statement execution, transaction control, query plan visualization, and real-time query profile analysis directly in the panel.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>explain_query</code> — Calls EXPLAIN on any SQL, returns the query plan as structured JSON for visualization.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_query_profile</code> — Fetches the QUERY_HISTORY + QUERY_ATTRIBUTION for a given query_id including operator-level stats.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>validate_sql</code> — Dry-run validation without execution using <code>EXPLAIN USING TABULAR</code>, returns errors and warnings.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>run_transaction</code> — Executes multi-statement blocks with BEGIN/COMMIT/ROLLBACK management and partial rollback on error.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>format_sql</code> — Server-side formatting using <code>sql-formatter</code> with dialect-specific rules applied.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Query plan tree visualizer — renders EXPLAIN output as a collapsible node tree with cost highlighting on expensive operators.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Inline error overlay on the SQL editor — squiggles under offending tokens from <code>validate_sql</code> response.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Query profile mini-panel — shows bytes scanned, partitions pruned, spill, and operator breakdown without leaving the workspace.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Multi-tab SQL editor — manage multiple queries simultaneously, each with independent execution context.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">sql-generation.skill</span>
+          <span class="chip exists">snowflake-query-optimizer.skill</span>
+          <span class="chip new">query-profiler.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.2 Explore -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Explore Databases, Schemas, Tables &amp; Views</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Explorer already shows databases/schemas/tables. Extension adds column search, data previews, statistics, sample values, and cross-database object discovery.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>search_objects</code> — Full-text search across all object names in INFORMATION_SCHEMA. Returns tables, views, procedures, functions matching a keyword.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_table_stats</code> — Returns row count, byte size, created date, last modified, cluster depth, and micro-partition count for a table.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>preview_table</code> — Fetches a representative sample (TABLESAMPLE) with column profile: null%, distinct count, min/max per column.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>list_views</code> — Lists views with their DDL definition and dependency list.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_column_profile</code> — For a given column, returns value distribution histogram, top-N values, null rate, and data type details.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Object search bar in LeftPanel with keyboard shortcut (⌘F) — fuzzy search across all schema objects.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Table detail drawer — click any table to see stats, schema, sample, and AI-generated description in a side panel.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Column profile mini-chart — inline histogram per column shown inside the DESCRIBE view.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">metadata-explorer.skill (NEW)</span>
+          <span class="chip exists">data-architect.skill</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.3 Marketplace -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Search Snowflake Marketplace Listings</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Discover, evaluate, and integrate Snowflake Marketplace data products directly from the platform — without switching to the Snowflake UI or manually browsing listings.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>search_marketplace</code> — Queries the Snowflake Marketplace listing API by keyword, category, and provider. Returns name, description, provider, and listing URL.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_listing_details</code> — Fetches full metadata for a listing: sample schema, data dictionary, coverage, update frequency, and pricing tier.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>list_installed_listings</code> — Shows data products already mounted in the account from SNOWFLAKE.DATA_SHARING_USAGE.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Marketplace search panel in LeftPanel tab — keyword search with category filter, listing cards with AI summaries.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Listing detail modal — schema preview, sample query generator, and "Mount this listing" button that generates the IMPORT statement.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">AI can answer "find me weather data for zip codes" → surfaces marketplace options automatically during chat.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">marketplace-advisor.skill (NEW)</span>
+          <span class="chip exists">snowflake-data-sharing.skill</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.4 Semantic / Cortex Analyst -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Semantic Models &amp; Cortex Analyst (Text-to-SQL)</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Build and manage Snowflake semantic model YAML files, then route natural language questions through Cortex Analyst REST API for governed text-to-SQL on top of certified models.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>cortex_analyst_query</code> — Sends a natural language question + semantic model stage path to the Cortex Analyst REST endpoint. Returns the generated SQL + confidence score.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>upload_semantic_model</code> — Uploads a YAML semantic model to a Snowflake internal stage via PUT command.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>list_semantic_models</code> — Lists semantic model YAML files in a specified stage, with last-modified dates.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>validate_semantic_model</code> — Parses the YAML against the Cortex Analyst schema, returns validation errors.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Semantic Model Builder — YAML editor with live validation, dimension/measure/join configurator with type-safe dropdowns.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Cortex Analyst chat mode — toggle in CenterPanel that routes queries via Cortex Analyst instead of the LLM, showing the governed SQL it generated.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Model → Semantic YAML auto-generator — AI reads existing dbt YAML or INFORMATION_SCHEMA and proposes a semantic model skeleton.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">cortex-analyst-builder.skill (NEW)</span>
+          <span class="chip new">semantic-layer-designer.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.5 Governance / Lineage / Quality -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Data Governance, Lineage &amp; Data Quality</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Surface Snowflake's native access history, object lineage (ACCESS_HISTORY + OBJECT_DEPENDENCIES), dynamic data masking, row access policies, and classification tags — all queryable and actionable from the platform.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_object_lineage</code> — Queries SNOWFLAKE.ACCOUNT_USAGE.OBJECT_DEPENDENCIES to build an upstream/downstream dependency graph for any table or view.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_access_history</code> — Returns who accessed which columns from ACCESS_HISTORY, filterable by user, object, and date range.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>list_policies</code> — Lists masking policies, row access policies, and tags applied to objects in a schema.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>run_quality_checks</code> — Executes a suite of configurable data quality SQL assertions (null checks, uniqueness, range, referential integrity) and returns a pass/fail scorecard.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>classify_columns</code> — Calls SYSTEM$CLASSIFY on a table to auto-suggest privacy/sensitivity tags.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Lineage graph panel — interactive DAG showing upstream sources and downstream consumers with click-to-inspect nodes.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Data Quality Scorecard — per-table quality dashboard with check results, trend sparklines, and drill-down to failing rows.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Governance audit panel — PII column report, policy coverage map, and unprotected sensitive column alerts.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">snowflake-governance-and-compliance.skill</span>
+          <span class="chip new">data-quality-engineer.skill (NEW)</span>
+          <span class="chip new">lineage-analyst.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1.6 Cost / Billing -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Cost &amp; Billing Analysis</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Warehouse usage already exists. Extension adds full credit attribution by query/user/role/database, billing forecast, idle warehouse detection, and AI-generated cost reduction recommendations.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_credit_usage</code> — Breaks down credits by service type (compute, storage, serverless, cloud services) from METERING_HISTORY.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_top_cost_queries</code> — Returns the top-N most expensive queries by credits in a time window from QUERY_HISTORY joined with WAREHOUSE_METERING_HISTORY.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>detect_idle_warehouses</code> — Finds warehouses with low utilization in the last N days using WAREHOUSE_LOAD_HISTORY. Suggests scale-down or AUTO_SUSPEND adjustments.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text"><code>get_storage_costs</code> — Queries STORAGE_USAGE and DATABASE_STORAGE_USAGE_HISTORY. Returns per-database storage trend and estimated cost.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Cost Attribution Dashboard — recharts area chart of daily credits, pie by service type, bar chart top-10 expensive queries.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">AI Cost Advisor — "Here are 3 things spending the most credits this week, with SQL to fix them."</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--snow)"></div><div class="impl-text">Billing Forecast widget — 30-day projected credit spend based on current run rate.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">snowflake-warehouses.skill</span>
+          <span class="chip new">cost-optimization.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /cap-grid -->
+
+  <!-- MCP TOOLS TABLE - DOMAIN 1 -->
+  <div class="tools-section">
+    <div class="tools-title">Domain 1 — New MCP Tool Definitions</div>
+    <table class="tool-table">
+      <thead>
+        <tr><th>Tool Name</th><th>Snowflake Source</th><th>Input Schema (key params)</th><th>Output</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>explain_query</code></td><td>EXPLAIN USING TABULAR</td><td><code>query: str</code></td><td>Plan JSON with operator costs</td></tr>
+        <tr><td><code>get_query_profile</code></td><td>QUERY_HISTORY + QUERY_ATTRIBUTION</td><td><code>query_id: str</code></td><td>Operator stats, spill, bytes scanned</td></tr>
+        <tr><td><code>validate_sql</code></td><td>EXPLAIN USING TABULAR (dry run)</td><td><code>query: str</code></td><td>Errors/warnings list</td></tr>
+        <tr><td><code>search_objects</code></td><td>INFORMATION_SCHEMA.TABLES/ROUTINES</td><td><code>keyword: str, types: list</code></td><td>Matching objects with schema info</td></tr>
+        <tr><td><code>get_table_stats</code></td><td>SHOW TABLES + INFORMATION_SCHEMA</td><td><code>database, schema, table</code></td><td>Row count, bytes, cluster depth</td></tr>
+        <tr><td><code>preview_table</code></td><td>TABLESAMPLE + column profiling</td><td><code>database, schema, table, sample_pct</code></td><td>Sample rows + null rates per column</td></tr>
+        <tr><td><code>get_column_profile</code></td><td>COUNT/APPROX_COUNT_DISTINCT</td><td><code>database, schema, table, column</code></td><td>Histogram, top values, null rate</td></tr>
+        <tr><td><code>cortex_analyst_query</code></td><td>Cortex Analyst REST API</td><td><code>question: str, model_path: str</code></td><td>Generated SQL + interpretation</td></tr>
+        <tr><td><code>get_object_lineage</code></td><td>ACCOUNT_USAGE.OBJECT_DEPENDENCIES</td><td><code>object_name, object_type, direction</code></td><td>Upstream/downstream dependency list</td></tr>
+        <tr><td><code>run_quality_checks</code></td><td>Executes assertion SQL suite</td><td><code>database, schema, table, checks: list</code></td><td>Pass/fail scorecard per check</td></tr>
+        <tr><td><code>get_top_cost_queries</code></td><td>ACCOUNT_USAGE.QUERY_HISTORY</td><td><code>days: int, limit: int</code></td><td>Top-N queries by credits</td></tr>
+        <tr><td><code>detect_idle_warehouses</code></td><td>WAREHOUSE_LOAD_HISTORY</td><td><code>days: int, threshold_pct: float</code></td><td>Idle warehouses with suggestions</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     DOMAIN 2: DEVELOPMENT
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="development">
+  <div class="domain-header">
+    <div class="domain-num" style="color:var(--dbt)">02 / 05</div>
+    <div>
+      <h2 class="domain-title" style="color:var(--dbt)">Development</h2>
+      <p class="domain-desc">End-to-end development capabilities: dbt project scaffolding and deployment, Streamlit app guidance, Snowflake Notebooks, and comprehensive SQL/Python code generation and debugging — all AI-assisted and linked to the platform's project context.</p>
+    </div>
+  </div>
+
+  <div class="cap-grid">
+
+    <!-- 2.1 dbt -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">dbt Project Development, Testing &amp; Deployment</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Full dbt lifecycle inside the platform: scaffold projects, generate models from schemas, write tests, run CI checks, and deploy to dbt Cloud — all without leaving π Accelerator.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>scaffold_dbt_project</code> — Generates complete dbt project directory: <code>dbt_project.yml</code>, profiles, packages.yml, macros/, seeds/, models/ skeleton from a project definition.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>generate_dbt_model</code> — Takes a table's DESCRIBE output and generates staging SQL + schema.yml with tests in one operation.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>run_dbt_cloud_job</code> — Triggers a dbt Cloud job via API, polls for completion, returns run logs and model-level test results.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>get_dbt_run_results</code> — Fetches run results JSON from dbt Cloud — model status, test pass/fail, timing.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>parse_dbt_manifest</code> — Parses a dbt manifest.json and returns model graph, column lineage, and test coverage report.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>generate_dbt_tests</code> — For a given model + schema, auto-generates dbt test YAML: not_null, unique, accepted_values, relationships, dbt_expectations.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">dbt Studio panel — file tree of generated models, inline editor, model DAG preview, test results sidebar.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">One-click export — downloads complete dbt project as .zip ready to commit to GitHub.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">dbt Cloud run monitor — real-time log stream of triggered jobs with model-level pass/fail indicators.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Test Coverage Heatmap — visual grid of which models have which tests, highlights gaps.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">analytics-engineer.skill</span>
+          <span class="chip new">dbt-developer.skill (NEW)</span>
+          <span class="chip new">dbt-test-engineer.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.2 Streamlit -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Streamlit App Guidance</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>AI-guided creation of Streamlit in Snowflake (SiS) apps — from idea to deployed app. Generate app scaffolding, integrate with Snowflake tables, debug runtime errors, and publish directly to Snowflake.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>create_streamlit_app</code> — Executes <code>CREATE STREAMLIT</code> DDL in Snowflake, uploading the Python file to the specified stage.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>list_streamlit_apps</code> — Lists all SiS apps in the account with their status, last updated, and URL.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>upload_to_stage</code> — Uploads a file to a Snowflake internal stage via PUT command — used for app code and dependencies.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Streamlit App Generator — describe the app in natural language → AI writes complete Python + requirements.txt, previews the layout.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Built-in Python editor for Streamlit code with syntax highlighting and error checking.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Deploy button — packages and pushes to Snowflake with CREATE STREAMLIT. Shows the app URL when done.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">streamlit-developer.skill (NEW)</span>
+          <span class="chip exists">snowflake-python-integration.skill</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.3 Notebooks -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Notebook Creation &amp; Editing (Workspaces)</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Create and manage Snowflake Notebooks from the platform — AI generates cell-by-cell analysis notebooks with SQL, Python, and Markdown cells, tied to the current project context.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>create_notebook</code> — Uses the Snowflake Notebooks REST API to create a new notebook in a specified database/schema with initial cell content.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>list_notebooks</code> — Lists existing notebooks in the account with status and last-run timestamp.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>execute_notebook</code> — Triggers notebook execution via the Snowflake Notebooks Execute API and returns cell output.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Notebook builder — cell-based editor (SQL | Python | Markdown) with AI auto-fill for each cell type.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Template library — EDA template, model profiling template, pipeline debugging template, one-click scaffold.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">AI converts a chat conversation into a runnable notebook — "Document this investigation as a notebook."</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">notebook-developer.skill (NEW)</span>
+          <span class="chip exists">snowflake-python-integration.skill</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2.4 SQL/Python Code -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">SQL/Python Code Generation &amp; Debugging</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Existing SQL generation and stored procedure skills are strong. Extension adds Python/Snowpark code generation, multi-language debugging with stack trace analysis, and code refactoring with diff view.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>run_python_procedure</code> — Executes a Python stored procedure and captures output/errors for the AI to debug.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>get_procedure_source</code> — Fetches the DDL of a stored procedure or UDF using GET_DDL for the AI to read and refactor.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text"><code>list_functions</code> — Lists UDFs and UDTFs with their language, signature, and description.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Language toggle in editor — SQL / Python / Jinja — switches syntax highlighting and AI skill context automatically.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Refactor diff view — existing diff viewer extended for Python code changes, not just SQL.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--dbt)"></div><div class="impl-text">Debug mode — paste stack trace → AI identifies root cause, proposes fix, and shows the corrected code.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">sql-generation.skill</span>
+          <span class="chip exists">snowflake-stored-procedures.skill</span>
+          <span class="chip exists">snowflake-python-integration.skill</span>
+          <span class="chip new">snowpark-developer.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     DOMAIN 3: AI & ML
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="aiml">
+  <div class="domain-header">
+    <div class="domain-num" style="color:var(--ai)">03 / 05</div>
+    <div>
+      <h2 class="domain-title" style="color:var(--ai)">AI &amp; ML</h2>
+      <p class="domain-desc">Unlock Snowflake Cortex AI functions, machine learning workflows with the Model Registry, and Cortex Agent setup — all accessible through natural language and structured skill flows inside the platform.</p>
+    </div>
+  </div>
+
+  <div class="cap-grid">
+
+    <!-- 3.1 Cortex Functions -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Cortex AI Functions</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Classify, extract, summarize, translate, and sentiment-analyze any Snowflake column using Cortex LLM functions — with AI assistance to write the correct <code>SNOWFLAKE.CORTEX.*</code> function calls and interpret results.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_complete</code> — Calls <code>SNOWFLAKE.CORTEX.COMPLETE(model, prompt)</code> directly from the platform with model selector (mistral-large, llama3-70b, arctic, etc).</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_summarize_column</code> — Runs <code>SNOWFLAKE.CORTEX.SUMMARIZE</code> over a sampled column and returns aggregated summaries.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_sentiment_column</code> — Runs <code>SNOWFLAKE.CORTEX.SENTIMENT</code> over a text column and returns distribution stats (positive/negative/neutral counts).</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_classify_text</code> — Runs <code>SNOWFLAKE.CORTEX.CLASSIFY_TEXT</code> with user-defined categories. Returns predicted class distribution.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_extract_answer</code> — <code>SNOWFLAKE.CORTEX.EXTRACT_ANSWER</code> — run question extraction across a document column.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>cortex_translate</code> — <code>SNOWFLAKE.CORTEX.TRANSLATE</code> — translate text column to a target language, returns sample output.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Cortex Function Studio — select a table + column, pick a Cortex function, set parameters, preview result on 10 rows, then get the complete SQL to operationalize it.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Model selector panel — choose from available Cortex LLM models with latency/cost tradeoff info.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">AI can answer: "Classify customer feedback by category" → generates the full SQL using CLASSIFY_TEXT, executes preview, shows result.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">cortex-ai-functions.skill (NEW)</span>
+          <span class="chip new">snowflake-llm-workflows.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.2 ML Workflows -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Machine Learning Workflows &amp; Model Registry</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Guide teams through Snowpark ML workflows: feature engineering, model training with Snowpark ML Modeling, registration in the Snowflake Model Registry, and deployment for inference — all AI-guided.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>list_model_registry</code> — Lists registered models in the Snowflake Model Registry: name, version, flavor, creation date, metrics.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>get_model_details</code> — Returns model metadata: training SQL, feature columns, evaluation metrics, deployment status.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>run_inference</code> — Calls a registered model's prediction UDF against a sample dataset using the model registry's predict method.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>list_feature_stores</code> — Lists Snowflake Feature Store entity definitions and feature views.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">ML Workflow Builder — step-by-step guided flow: define target, select features, choose algorithm, generate Snowpark Python training script, register model.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Model Registry browser — list all registered models, compare versions, view metrics side-by-side.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Feature view inspector — list feature store entities, their features, and the SQL that defines them.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">ml-engineer.skill (NEW)</span>
+          <span class="chip exists">snowflake-python-integration.skill</span>
+          <span class="chip new">feature-engineering.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3.3 Cortex Agents -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Cortex Agent Setup</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Configure and test Cortex Agents — Snowflake's native agentic AI framework. Define tools, semantic models, and search services. Generate the AGENT definition SQL and test agent responses from the platform.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>create_cortex_agent</code> — Generates and executes the <code>CREATE AGENT</code> DDL (or equivalent API call) for a Cortex Agent configuration.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>call_cortex_agent</code> — Sends a message to a deployed Cortex Agent and returns the response including tool call trace.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text"><code>list_cortex_search_services</code> — Lists Cortex Search Services available for agent use, with their indexed tables and columns.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Agent Builder wizard — select LLM, add tools (SQL execution, semantic search, document retrieval), configure memory, generate DDL.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Agent test console — chat interface to test agent responses with tool call trace viewer showing which tool was called and why.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ai)"></div><div class="impl-text">Agent-to-skill mapping — AI explains which combination of existing skills maps to a proposed agent's capabilities.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">cortex-agent-builder.skill (NEW)</span>
+          <span class="chip new">cortex-analyst-builder.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     DOMAIN 4: OPERATIONS
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="operations">
+  <div class="domain-header">
+    <div class="domain-num" style="color:var(--ops)">04 / 05</div>
+    <div>
+      <h2 class="domain-title" style="color:var(--ops)">Operations</h2>
+      <p class="domain-desc">Platform administration, security, and compliance: RBAC management, grant analysis, role hierarchy visualization, security posture analysis, defensive hardening, and documentation lookup — all from the platform without raw SQL needed.</p>
+    </div>
+  </div>
+
+  <div class="cap-grid">
+
+    <!-- 4.1 RBAC -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">RBAC, Roles, Grants &amp; Access Control</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Model, visualize, and manage Snowflake's role hierarchy and privilege grants. AI generates GRANT/REVOKE statements, identifies overprivileged roles, and validates RBAC against the principle of least privilege.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>get_role_hierarchy</code> — Queries SHOW GRANTS TO/OF ROLE recursively to build the full role inheritance graph.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>list_privileges</code> — Lists all privileges granted to a given role, user, or on a given object. Sourced from ACCOUNT_USAGE.GRANTS_TO_ROLES.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>check_effective_privileges</code> — For a given user + object, shows their effective privileges (resolving all role inheritance chains) so you know exactly what they can do.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>generate_rbac_ddl</code> — AI generates the complete GRANT/REVOKE SQL to implement a requested RBAC change. Uses dry-run validation before execution.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>audit_role_usage</code> — Finds roles that have been granted but never used (from LOGIN_HISTORY + QUERY_HISTORY) — stale role cleanup report.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Role Hierarchy Visualizer — interactive tree graph of role inheritance with privilege counts at each node.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Privilege Matrix — tabular view of object → role → privilege level. Sortable, filterable.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">RBAC change generator — describe the access request in English → AI generates the complete DDL with review step before execution.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">snowflake-security.skill</span>
+          <span class="chip new">rbac-manager.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4.2 Security -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Security Analysis &amp; Defensive Tooling</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Proactive security posture analysis: identify unmasked PII columns, misconfigured network policies, overprivileged service accounts, unusual query patterns, and compliance gaps — with AI-generated remediation SQL.</p>
+        <div class="impl-section-title">New MCP Tools</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>run_security_scan</code> — Executes a suite of security checks: unmasked classified columns, missing row access policies, overprivileged PUBLIC role grants, network policy coverage.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>detect_anomalous_queries</code> — Queries QUERY_HISTORY for unusual patterns: off-hours access, mass exports (large byte scans), new table access by a user.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>list_network_policies</code> — Lists all network policies and the users/accounts they're assigned to. Identifies users without any network policy.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>get_unprotected_columns</code> — Cross-references CLASSIFICATION tags against masking policy assignments. Returns columns tagged as PII/Sensitive but without a masking policy.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Security Posture Dashboard — traffic-light score per check category (Access, Data Protection, Network, Audit), with drill-down to specific findings.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Anomaly alert feed — timeline of unusual access events with AI-generated explanation of each alert.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Remediation SQL generator — each finding links to an AI-generated fix with review/approve workflow.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">snowflake-security.skill</span>
+          <span class="chip exists">snowflake-governance-and-compliance.skill</span>
+          <span class="chip new">security-analyst.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4.3 Docs Lookup -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Snowflake Product Documentation Lookup</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>Instant, context-aware access to Snowflake documentation — not just "go to docs.snowflake.com" but answers grounded in the actual docs, with exact function signatures, parameter tables, and relevant examples.</p>
+        <div class="impl-section-title">Implementation Approach</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Route documentation questions to a web_search-augmented skill that targets <code>docs.snowflake.com</code> — returns exact syntax, parameter tables, and version notes.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text"><code>search_snowflake_docs</code> MCP tool — calls the Snowflake docs search API or fetches specific doc pages by slug, returning structured content for the AI to cite.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Automatic doc link injection — when AI generates any function call or DDL, it appends the canonical docs URL for that function.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Changelog awareness — docs skill includes a "What's new" lookup that returns recent feature releases relevant to a topic.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Docs Quick Panel — ⌘? keyboard shortcut opens a doc search overlay. Type any Snowflake keyword → instant answer with citation.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--ops)"></div><div class="impl-text">Hover docs — hover over any SQL keyword in the editor → popover with function signature and docs link.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">snowflake-docs-lookup.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     DOMAIN 5: GENERAL
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="general">
+  <div class="domain-header">
+    <div class="domain-num" style="color:var(--gen)">05 / 05</div>
+    <div>
+      <h2 class="domain-title" style="color:var(--gen)">General</h2>
+      <p class="domain-desc">Platform-wide capabilities that work across all domains: code explanation and refactoring, best practice guidance, task planning with multi-step workflow execution, and cross-domain automation chains.</p>
+    </div>
+  </div>
+
+  <div class="cap-grid">
+
+    <!-- 5.1 Code Explanation -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Code Explanations, Refactoring &amp; Best Practices</div>
+        <span class="status-tag st-ext">Extend</span>
+      </div>
+      <div class="cap-card-body">
+        <p>The existing diff viewer and optimizer cover SQL refactoring. Extension adds cross-language explanation (SQL → plain English → Python → dbt SQL), best practice auditing, and code review mode.</p>
+        <div class="impl-section-title">New Capabilities</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Code Review Mode — paste any SQL/Python, AI produces a structured code review: correctness, performance, maintainability, security, and style — with specific line-level comments.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Translate Mode — SQL → Python (Snowpark) / Python → SQL / SQL → dbt model with ref() / dbt → plain SQL. One-click translation with explanation.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Best Practice Auditor — scans a SQL file or model against a configurable ruleset (naming, anti-patterns, missing tests, hardcoded values) and produces a findings report.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Inline "Explain This" — select any code block → ⌘E → AI generates a plain-English explanation targeted at junior developer reading level.</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Code Review panel — structured output with severity badges (critical / warning / suggestion) and line-level annotations.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Translation panel — side-by-side before/after with language selector and explanation below.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip exists">sql-generation.skill</span>
+          <span class="chip exists">snowflake-query-optimizer.skill</span>
+          <span class="chip new">code-reviewer.skill (NEW)</span>
+          <span class="chip new">code-translator.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5.2 Task Planning -->
+    <div class="cap-card">
+      <div class="cap-card-head">
+        <div class="cap-title">Task Planning &amp; Multi-Step Workflows</div>
+        <span class="status-tag st-new">New</span>
+      </div>
+      <div class="cap-card-body">
+        <p>The platform's highest-leverage capability: describe a complex data engineering goal in one sentence → AI generates a complete multi-step plan, executes each step using the appropriate domain skills, and tracks progress through a task board.</p>
+        <div class="impl-section-title">Implementation Architecture</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Planner Agent — a meta-skill that receives a high-level goal, decomposes it into ordered sub-tasks, assigns each sub-task to the correct skill domain, and tracks completion.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Task Queue — each decomposed step is a queued task with: assigned skill, status (pending/active/done/blocked), input context, and output artifact link.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Cross-skill chaining — output of one step becomes input context for the next. E.g., schema design step outputs DDL → development step uses that DDL as context for model generation.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Human-in-the-loop gates — configurable approval checkpoints between steps. Blocks on "Confirm this DDL before execution?" type prompts.</div></div>
+        </div>
+        <div class="impl-section-title">Example Workflow</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text"><strong style="color:var(--white)">Goal:</strong> "Set up a pipeline that loads customer orders from S3 into Snowflake, models them in dbt, and creates a Streamlit dashboard."</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text"><strong style="color:var(--gen)">Step 1 (Ingestion):</strong> Generate stage + COPY INTO SQL for S3 → Snowflake. Execute with approval. ✓</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text"><strong style="color:var(--gen)">Step 2 (Architecture):</strong> DESCRIBE loaded table → generate dbt staging model + schema YAML + tests. ✓</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text"><strong style="color:var(--gen)">Step 3 (Testing):</strong> Run generated dbt tests. Report quality scorecard. ✓</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text"><strong style="color:var(--gen)">Step 4 (App):</strong> Generate Streamlit app using the mart model. Deploy to Snowflake. ✓</div></div>
+        </div>
+        <div class="impl-section-title">UI Components</div>
+        <div class="impl-rows">
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Workflow Board — Kanban-style view of task queue: Planned / Running / Awaiting Approval / Done. Each card links to the artifact it produced.</div></div>
+          <div class="impl-row"><div class="impl-bullet" style="background:var(--gen)"></div><div class="impl-text">Plan preview before execution — AI shows the decomposed steps for user approval before any MCP tool is called.</div></div>
+        </div>
+        <div class="impl-section-title">Skills</div>
+        <div class="chip-row">
+          <span class="chip new">task-planner.skill (NEW)</span>
+          <span class="chip new">workflow-orchestrator.skill (NEW)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     ARCHITECTURE
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="architecture">
+  <div class="domain-header">
+    <div class="domain-num">ARCH</div>
+    <div>
+      <h2 class="domain-title">Evolved System Architecture</h2>
+      <p class="domain-desc">The existing FastAPI MCP bridge and React frontend scale into a multi-domain service layer. Each new domain adds its own tool group to the registry without disrupting existing tools.</p>
+    </div>
+  </div>
+
+  <div class="arch-block">
+    <div style="font-size:.65rem;color:var(--muted);margin-bottom:1.5rem;letter-spacing:.15em;text-transform:uppercase;">// System Layers — Italic/Orange = New · Blue = Exists</div>
+    <div class="arch-row">
+      <div class="arch-layer-name">UI Panels</div>
+      <div class="arch-items-row">
+        <span class="ai-box exists">SQL Workspace</span>
+        <span class="ai-box exists">DB Explorer</span>
+        <span class="ai-box exists">Results + Charts</span>
+        <span class="ai-box new">Cortex Studio</span>
+        <span class="ai-box new">dbt Studio</span>
+        <span class="ai-box new">ML Registry</span>
+        <span class="ai-box new">RBAC Visualizer</span>
+        <span class="ai-box new">Lineage Graph</span>
+        <span class="ai-box new">Workflow Board</span>
+        <span class="ai-box new">Marketplace</span>
+        <span class="ai-box new">Cost Dashboard</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-layer-name">Skill Files (.md)</div>
+      <div class="arch-items-row">
+        <span class="ai-box snow">sql-generation</span>
+        <span class="ai-box snow">analytics-engineer</span>
+        <span class="ai-box snow">data-architect</span>
+        <span class="ai-box snow">stored-procedures</span>
+        <span class="ai-box snow">query-optimizer</span>
+        <span class="ai-box snow">security</span>
+        <span class="ai-box snow">governance</span>
+        <span class="ai-box snow">python-integration</span>
+        <span class="ai-box snow">warehouses</span>
+        <span class="ai-box new">dbt-developer</span>
+        <span class="ai-box new">cortex-ai-functions</span>
+        <span class="ai-box new">ml-engineer</span>
+        <span class="ai-box new">cortex-agent-builder</span>
+        <span class="ai-box new">rbac-manager</span>
+        <span class="ai-box new">security-analyst</span>
+        <span class="ai-box new">task-planner</span>
+        <span class="ai-box new">streamlit-developer</span>
+        <span class="ai-box new">data-quality-engineer</span>
+        <span class="ai-box new">cost-optimization</span>
+        <span class="ai-box new">marketplace-advisor</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-layer-name">AI Layer</div>
+      <div class="arch-items-row">
+        <span class="ai-box exists">Gemini / GPT Routing</span>
+        <span class="ai-box exists">Skill Injection</span>
+        <span class="ai-box exists">Thinking Mode</span>
+        <span class="ai-box new">Multi-Skill Chain</span>
+        <span class="ai-box new">Planner Agent</span>
+        <span class="ai-box new">Project Context Memory</span>
+        <span class="ai-box new">Cortex Analyst Bridge</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-layer-name">MCP Tool Registry</div>
+      <div class="arch-items-row">
+        <span class="ai-box snow">run_query</span>
+        <span class="ai-box snow">list_databases</span>
+        <span class="ai-box snow">describe_table</span>
+        <span class="ai-box snow">warehouse_usage</span>
+        <span class="ai-box new">explain_query</span>
+        <span class="ai-box new">get_query_profile</span>
+        <span class="ai-box new">search_objects</span>
+        <span class="ai-box new">preview_table</span>
+        <span class="ai-box new">cortex_analyst_query</span>
+        <span class="ai-box new">get_object_lineage</span>
+        <span class="ai-box new">run_quality_checks</span>
+        <span class="ai-box new">scaffold_dbt_project</span>
+        <span class="ai-box new">run_dbt_cloud_job</span>
+        <span class="ai-box new">cortex_complete</span>
+        <span class="ai-box new">list_model_registry</span>
+        <span class="ai-box new">get_role_hierarchy</span>
+        <span class="ai-box new">run_security_scan</span>
+        <span class="ai-box new">get_top_cost_queries</span>
+        <span class="ai-box new">call_cortex_agent</span>
+        <span class="ai-box new">create_streamlit_app</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-layer-name">Backend Services</div>
+      <div class="arch-items-row">
+        <span class="ai-box exists">FastAPI MCP Bridge (:5000)</span>
+        <span class="ai-box new">dbt Cloud API Client</span>
+        <span class="ai-box new">Cortex REST Client</span>
+        <span class="ai-box new">Project State DB</span>
+        <span class="ai-box new">Artifact File Store</span>
+        <span class="ai-box new">GitHub API Client</span>
+      </div>
+    </div>
+    <div class="arch-row">
+      <div class="arch-layer-name">Snowflake Sources</div>
+      <div class="arch-items-row">
+        <span class="ai-box snow">QUERY_HISTORY</span>
+        <span class="ai-box snow">INFORMATION_SCHEMA</span>
+        <span class="ai-box snow">WAREHOUSE_METERING_HISTORY</span>
+        <span class="ai-box snow">OBJECT_DEPENDENCIES</span>
+        <span class="ai-box snow">GRANTS_TO_ROLES</span>
+        <span class="ai-box snow">ACCESS_HISTORY</span>
+        <span class="ai-box snow">Cortex Analyst API</span>
+        <span class="ai-box snow">Cortex LLM Functions</span>
+        <span class="ai-box snow">Model Registry API</span>
+        <span class="ai-box snow">Notebooks API</span>
+        <span class="ai-box snow">Marketplace API</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- BACKEND EXTENSION PATTERN -->
+  <div class="divider">Backend extension pattern</div>
+  <p style="font-size:.82rem;color:var(--muted);max-width:700px;line-height:1.8;margin-bottom:1.5rem;">
+    Every new MCP tool follows the existing <code style="font-family:var(--ff-mono);font-size:.72rem;background:var(--s2);border:1px solid var(--border2);padding:.05rem .3rem;color:var(--white)">ToolRegistry._register(ToolDefinition, handler)</code> pattern. New domains are organized as separate registry modules (e.g., <code style="font-family:var(--ff-mono);font-size:.72rem;background:var(--s2);border:1px solid var(--border2);padding:.05rem .3rem;color:var(--white)">cortex_registry.py</code>, <code style="font-family:var(--ff-mono);font-size:.72rem;background:var(--s2);border:1px solid var(--border2);padding:.05rem .3rem;color:var(--white)">dbt_registry.py</code>, <code style="font-family:var(--ff-mono);font-size:.72rem;background:var(--s2);border:1px solid var(--border2);padding:.05rem .3rem;color:var(--white)">security_registry.py</code>) that are instantiated and merged into the main registry at startup. The existing <code style="font-family:var(--ff-mono);font-size:.72rem;background:var(--s2);border:1px solid var(--border2);padding:.05rem .3rem;color:var(--white)">SnowflakeClient</code>, security validation, and CORS setup remain unchanged.
+  </p>
+</section>
+
+
+<!-- ══════════════════════════════════════════════════════════════
+     SPRINTS
+═══════════════════════════════════════════════════════════════ -->
+<section class="domain-section" id="sprints">
+  <div class="domain-header">
+    <div class="domain-num">PLAN</div>
+    <div>
+      <h2 class="domain-title">8-Sprint Implementation Roadmap</h2>
+      <p class="domain-desc">Ordered by value delivery and dependency. Each sprint ships usable, tested features — no "save it all for a big bang." Sprint 1 works immediately after Day 1 setup.</p>
+    </div>
+  </div>
+
+  <div class="sprint-wrap">
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-snow">Sprint 1</span>
+        <span class="sprint-name">Deep SQL + Explorer</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Implement <code style="font-family:var(--ff-mono);font-size:.68rem">explain_query</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">get_query_profile</code> MCP tools in tool_registry.py</div>
+        <div class="sprint-item">Build query plan tree viewer component in RightPanel</div>
+        <div class="sprint-item">Add <code style="font-family:var(--ff-mono);font-size:.68rem">search_objects</code>, <code style="font-family:var(--ff-mono);font-size:.68rem">preview_table</code>, <code style="font-family:var(--ff-mono);font-size:.68rem">get_table_stats</code> tools</div>
+        <div class="sprint-item">Table detail drawer with stats, sample, and AI-generated description</div>
+        <div class="sprint-item">⌘F object search bar in LeftPanel</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">metadata-explorer.skill.md</code> and <code style="font-family:var(--ff-mono);font-size:.68rem">query-profiler.skill.md</code></div>
+        <div class="sprint-item">Multi-tab SQL editor in CenterPanel</div>
+      </div>
+      <div class="sprint-goal">Deliverable: Full Snowflake explorer with deep query profiling</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-snow">Sprint 2</span>
+        <span class="sprint-name">Governance + Cost</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Add <code style="font-family:var(--ff-mono);font-size:.68rem">get_object_lineage</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">get_access_history</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">run_quality_checks</code> tools</div>
+        <div class="sprint-item">Build Lineage Graph panel (D3/Recharts tree from lineage JSON)</div>
+        <div class="sprint-item">Data Quality Scorecard UI — heatmap by model/check</div>
+        <div class="sprint-item">Add <code style="font-family:var(--ff-mono);font-size:.68rem">get_top_cost_queries</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">detect_idle_warehouses</code> tools</div>
+        <div class="sprint-item">Cost Attribution Dashboard with recharts area + bar charts</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">data-quality-engineer.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">cost-optimization.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: Data governance, lineage, quality, and cost visibility</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-ai">Sprint 3</span>
+        <span class="sprint-name">Cortex AI Functions</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Implement all 6 Cortex function MCP tools (<code style="font-family:var(--ff-mono);font-size:.68rem">cortex_complete</code>, classify, summarize, sentiment, extract, translate)</div>
+        <div class="sprint-item">Build Cortex Function Studio panel with table/column selector and model picker</div>
+        <div class="sprint-item">Cortex Analyst MCP tool + YAML uploader + semantic model editor</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">cortex-ai-functions.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">cortex-analyst-builder.skill.md</code></div>
+        <div class="sprint-item">Integrate Cortex Analyst chat mode toggle in CenterPanel</div>
+      </div>
+      <div class="sprint-goal">Deliverable: Full Cortex AI function access and Cortex Analyst text-to-SQL</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-dbt">Sprint 4</span>
+        <span class="sprint-name">dbt Studio</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Build dbt project scaffolder — <code style="font-family:var(--ff-mono);font-size:.68rem">scaffold_dbt_project</code> tool + file tree UI</div>
+        <div class="sprint-item"><code style="font-family:var(--ff-mono);font-size:.68rem">generate_dbt_model</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">generate_dbt_tests</code> tools</div>
+        <div class="sprint-item">dbt Cloud integration: <code style="font-family:var(--ff-mono);font-size:.68rem">run_dbt_cloud_job</code> + run monitor UI</div>
+        <div class="sprint-item">Test Coverage Heatmap component</div>
+        <div class="sprint-item">Export as .zip button for dbt project artifacts</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">dbt-developer.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">dbt-test-engineer.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: Complete dbt project development and deployment workflow</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-ops">Sprint 5</span>
+        <span class="sprint-name">Operations + Security</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Add RBAC tools: <code style="font-family:var(--ff-mono);font-size:.68rem">get_role_hierarchy</code>, <code style="font-family:var(--ff-mono);font-size:.68rem">check_effective_privileges</code>, <code style="font-family:var(--ff-mono);font-size:.68rem">audit_role_usage</code></div>
+        <div class="sprint-item">Role Hierarchy tree visualizer (D3 force graph)</div>
+        <div class="sprint-item">Security scan tools: <code style="font-family:var(--ff-mono);font-size:.68rem">run_security_scan</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">get_unprotected_columns</code></div>
+        <div class="sprint-item">Security Posture Dashboard with traffic-light scoring</div>
+        <div class="sprint-item">Docs lookup skill + hover docs in SQL editor</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">rbac-manager.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">security-analyst.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: Full RBAC management, security posture analysis, and docs lookup</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-ai">Sprint 6</span>
+        <span class="sprint-name">ML + Cortex Agents</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Model Registry MCP tools: <code style="font-family:var(--ff-mono);font-size:.68rem">list_model_registry</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">run_inference</code></div>
+        <div class="sprint-item">ML Workflow Builder — guided flow for Snowpark ML training</div>
+        <div class="sprint-item">Cortex Agent builder: <code style="font-family:var(--ff-mono);font-size:.68rem">create_cortex_agent</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">call_cortex_agent</code></div>
+        <div class="sprint-item">Agent test console with tool call trace viewer</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">ml-engineer.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">cortex-agent-builder.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: ML Registry browser, Snowpark ML guides, and Cortex Agent setup</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-dbt">Sprint 7</span>
+        <span class="sprint-name">Streamlit + Notebooks</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Streamlit app generator + <code style="font-family:var(--ff-mono);font-size:.68rem">create_streamlit_app</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">upload_to_stage</code> tools</div>
+        <div class="sprint-item">Notebook builder with cell types (SQL/Python/Markdown) + AI fill</div>
+        <div class="sprint-item"><code style="font-family:var(--ff-mono);font-size:.68rem">create_notebook</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">execute_notebook</code> MCP tools</div>
+        <div class="sprint-item">Marketplace search panel + listing detail modal</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">streamlit-developer.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">notebook-developer.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">marketplace-advisor.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: Streamlit app builder, notebook creator, and Marketplace discovery</div>
+    </div>
+
+    <div class="sprint-cell">
+      <div class="sprint-head">
+        <span class="sprint-badge dp dp-gen">Sprint 8</span>
+        <span class="sprint-name">Workflow Orchestration</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Planner Agent — multi-step goal decomposition with skill routing</div>
+        <div class="sprint-item">Task Queue store in Zustand + Workflow Board Kanban UI</div>
+        <div class="sprint-item">Cross-skill context chaining — output artifact → next step input</div>
+        <div class="sprint-item">Human-in-the-loop approval gates with confirm/reject UI</div>
+        <div class="sprint-item">Code Reviewer + Translate mode panels</div>
+        <div class="sprint-item">Write <code style="font-family:var(--ff-mono);font-size:.68rem">task-planner.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">workflow-orchestrator.skill.md</code> + <code style="font-family:var(--ff-mono);font-size:.68rem">code-reviewer.skill.md</code></div>
+      </div>
+      <div class="sprint-goal">Deliverable: End-to-end workflow automation from single-sentence goals</div>
+    </div>
+
+  </div>
+</section>
+
+</div><!-- /page -->
+
+<footer class="footer">
+  <strong>π ACCELERATOR</strong> &mdash; Complete Snowflake Data Engineering Platform &nbsp;|&nbsp;
+  5 Domains &nbsp;·&nbsp; 27 Modules &nbsp;·&nbsp; 38 MCP Tools &nbsp;·&nbsp; 22 Skill Files &nbsp;·&nbsp; 8 Sprints
+</footer>
+
+</body>
+</html>

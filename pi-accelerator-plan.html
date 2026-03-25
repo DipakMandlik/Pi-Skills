@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>π Accelerator — End-to-End Data Engineering SDLC Platform</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+  :root {
+    --bg:        #080c10;
+    --surface:   #0d1520;
+    --surface2:  #111e2e;
+    --border:    #1a2d44;
+    --border2:   #243a52;
+    --text:      #c8d8e8;
+    --muted:     #5a7a96;
+    --accent:    #00d4ff;
+    --accent2:   #ff6b2b;
+    --accent3:   #7fff6b;
+    --accent4:   #c97dff;
+    --gold:      #f5c842;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+    --font-body: 'DM Sans', sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── NOISE TEXTURE ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 0; opacity: 0.6;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 40%, transparent 100%);
+    animation: gridPulse 8s ease-in-out infinite;
+  }
+
+  @keyframes gridPulse {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.9; }
+  }
+
+  .hero-glow {
+    position: absolute;
+    width: 800px; height: 800px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(0,212,255,0.08) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    animation: breathe 6s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.15); }
+  }
+
+  .hero-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .hero-eyebrow::before,
+  .hero-eyebrow::after {
+    content: '';
+    width: 40px; height: 1px;
+    background: var(--accent);
+    opacity: 0.5;
+  }
+
+  .hero-pi {
+    font-family: var(--font-head);
+    font-size: clamp(5rem, 15vw, 10rem);
+    font-weight: 800;
+    line-height: 0.9;
+    position: relative;
+    background: linear-gradient(135deg, var(--accent) 0%, #ffffff 50%, var(--accent2) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.04em;
+  }
+
+  .hero-title {
+    font-family: var(--font-head);
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-sub {
+    max-width: 680px;
+    color: var(--muted);
+    font-size: 1rem;
+    margin-bottom: 3rem;
+    line-height: 1.8;
+  }
+
+  .hero-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    position: relative;
+  }
+
+  .badge {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 1rem;
+    border-radius: 2px;
+    border: 1px solid;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .badge-blue  { color: var(--accent);  border-color: rgba(0,212,255,0.3);  background: rgba(0,212,255,0.06); }
+  .badge-orng  { color: var(--accent2); border-color: rgba(255,107,43,0.3); background: rgba(255,107,43,0.06); }
+  .badge-grn   { color: var(--accent3); border-color: rgba(127,255,107,0.3);background: rgba(127,255,107,0.06); }
+  .badge-prpl  { color: var(--accent4); border-color: rgba(201,125,255,0.3);background: rgba(201,125,255,0.06); }
+  .badge-gold  { color: var(--gold);    border-color: rgba(245,200,66,0.3); background: rgba(245,200,66,0.06); }
+
+  /* ── SECTION ── */
+  .section {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+    position: relative;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border2), transparent);
+  }
+
+  .section-title {
+    font-family: var(--font-head);
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+
+  .section-desc {
+    color: var(--muted);
+    max-width: 640px;
+    margin-bottom: 3rem;
+    font-size: 1rem;
+  }
+
+  /* ── CURRENT STATE ── */
+  .current-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+    margin-bottom: 4rem;
+  }
+
+  .current-card {
+    background: var(--surface);
+    padding: 1.75rem;
+    position: relative;
+  }
+
+  .current-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+  }
+
+  .card-blue::before  { background: var(--accent); }
+  .card-orng::before  { background: var(--accent2); }
+  .card-grn::before   { background: var(--accent3); }
+  .card-prpl::before  { background: var(--accent4); }
+
+  .current-card h3 {
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .current-card p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .pill {
+    font-family: var(--font-mono);
+    font-size: 0.6rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+  }
+
+  .pill-done  { background: rgba(127,255,107,0.12); color: var(--accent3); }
+  .pill-gap   { background: rgba(255,107,43,0.12);  color: var(--accent2); }
+  .pill-part  { background: rgba(245,200,66,0.12);  color: var(--gold); }
+
+  /* ── SDLC PHASES ── */
+  .phases {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    position: relative;
+  }
+
+  .phases::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, var(--border2) 10%, var(--border2) 90%, transparent);
+  }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 56px 1fr;
+    gap: 2rem;
+    padding: 2.5rem 0;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s;
+  }
+
+  .phase:last-child { border-bottom: none; }
+
+  .phase-num {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    z-index: 1;
+    position: relative;
+    border: 1px solid;
+  }
+
+  .p1 { background: rgba(0,212,255,0.1);   border-color: var(--accent);  color: var(--accent); }
+  .p2 { background: rgba(255,107,43,0.1);  border-color: var(--accent2); color: var(--accent2); }
+  .p3 { background: rgba(201,125,255,0.1); border-color: var(--accent4); color: var(--accent4); }
+  .p4 { background: rgba(127,255,107,0.1); border-color: var(--accent3); color: var(--accent3); }
+  .p5 { background: rgba(245,200,66,0.1);  border-color: var(--gold);    color: var(--gold); }
+  .p6 { background: rgba(0,212,255,0.1);   border-color: var(--accent);  color: var(--accent); }
+  .p7 { background: rgba(255,107,43,0.1);  border-color: var(--accent2); color: var(--accent2); }
+
+  .phase-body {}
+
+  .phase-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .phase-name {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #fff;
+    letter-spacing: -0.02em;
+  }
+
+  .phase-subtitle {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 1.25rem;
+    max-width: 700px;
+    line-height: 1.7;
+  }
+
+  .phase-modules {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .module {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 1rem 1.25rem;
+    border-radius: 2px;
+    transition: border-color 0.2s, transform 0.2s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .module::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 2px;
+  }
+
+  .module-new::after  { background: var(--accent2); }
+  .module-ext::after  { background: var(--accent3); }
+  .module-skill::after{ background: var(--accent4); }
+  .module-core::after { background: var(--accent); }
+
+  .module h4 {
+    font-family: var(--font-head);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .module p {
+    font-size: 0.75rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .mod-tag {
+    font-family: var(--font-mono);
+    font-size: 0.55rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 2px;
+    letter-spacing: 0.05em;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  .tag-new   { background: rgba(255,107,43,0.2);  color: var(--accent2); }
+  .tag-ext   { background: rgba(127,255,107,0.2); color: var(--accent3); }
+  .tag-skill { background: rgba(201,125,255,0.2); color: var(--accent4); }
+  .tag-core  { background: rgba(0,212,255,0.2);   color: var(--accent); }
+
+  .phase-skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .skill-chip {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--border2);
+    background: rgba(255,255,255,0.03);
+    border-radius: 2px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .skill-chip.new { border-color: rgba(255,107,43,0.4); color: var(--accent2); background: rgba(255,107,43,0.05); }
+
+  .skill-chip-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+  }
+
+  /* ── ARCHITECTURE ── */
+  .arch-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+  }
+
+  .arch-title {
+    font-family: var(--font-mono);
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+  }
+
+  .arch-layers {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .arch-layer {
+    display: grid;
+    grid-template-columns: 180px 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .arch-layer-label {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding-top: 0.6rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .arch-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .arch-item {
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border2);
+    background: var(--surface2);
+    color: var(--text);
+    border-radius: 2px;
+  }
+
+  .arch-item.new { border-color: rgba(255,107,43,0.5); color: var(--accent2); background: rgba(255,107,43,0.05); }
+  .arch-item.exists { border-color: rgba(0,212,255,0.4); color: var(--accent); background: rgba(0,212,255,0.04); }
+
+  /* ── ROADMAP ── */
+  .roadmap {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+
+  .roadmap-sprint {
+    background: var(--surface);
+    padding: 2rem;
+    position: relative;
+  }
+
+  .sprint-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .sprint-num {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    padding: 0.3rem 0.6rem;
+    letter-spacing: 0.1em;
+  }
+
+  .sprint-title {
+    font-family: var(--font-head);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .sprint-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .sprint-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  .sprint-item::before {
+    content: '▸';
+    color: var(--accent);
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    font-size: 0.65rem;
+  }
+
+  .sprint-goal {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    background: rgba(0,212,255,0.05);
+    border-left: 2px solid var(--accent);
+    font-size: 0.78rem;
+    color: var(--accent);
+    font-family: var(--font-mono);
+  }
+
+  /* ── INSPIRATION STRIP ── */
+  .inspo {
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 4rem 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .inspo::before {
+    content: 'π';
+    position: absolute;
+    font-family: var(--font-head);
+    font-size: 40rem;
+    font-weight: 800;
+    color: rgba(0,212,255,0.02);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .inspo-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  .inspo-quote {
+    font-family: var(--font-head);
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.35;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.02em;
+  }
+
+  .inspo-quote span { color: var(--accent); }
+
+  .inspo-desc {
+    color: var(--muted);
+    max-width: 580px;
+    margin: 0 auto;
+    font-size: 0.92rem;
+    line-height: 1.8;
+  }
+
+  /* ── SKILLS MAP ── */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .skill-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 1.25rem 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .skill-card:hover { border-color: var(--border2); }
+
+  .skill-phase-tag {
+    font-family: var(--font-mono);
+    font-size: 0.58rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .skill-card h4 {
+    font-family: var(--font-head);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .skill-card p {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* ── TABLE ── */
+  .comparison {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    margin-bottom: 3rem;
+  }
+
+  .comparison th {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border2);
+    background: var(--surface);
+  }
+
+  .comparison td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    vertical-align: top;
+  }
+
+  .comparison tr:last-child td { border-bottom: none; }
+
+  .comparison tr:hover td { background: rgba(255,255,255,0.01); }
+
+  .check  { color: var(--accent3); }
+  .cross  { color: var(--accent2); }
+  .part   { color: var(--gold); }
+
+  /* ── FOOTER ── */
+  .footer {
+    text-align: center;
+    padding: 3rem 2rem;
+    font-family: var(--font-mono);
+    font-size: 0.68rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    border-top: 1px solid var(--border);
+  }
+
+  .footer strong { color: var(--accent); }
+
+  /* ── NAV ── */
+  .nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    background: rgba(8,12,16,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 54px;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  .nav-logo {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  .nav-link {
+    font-family: var(--font-mono);
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .nav-link:hover { color: var(--accent); }
+
+  @media (max-width: 700px) {
+    .nav-link { display: none; }
+    .arch-layer { grid-template-columns: 1fr; }
+    .phases::before { display: none; }
+    .phase { grid-template-columns: 1fr; }
+    .phase-num { width: 40px; height: 40px; font-size: 0.75rem; }
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 0;
+  }
+
+  .highlight-box {
+    background: rgba(0,212,255,0.04);
+    border: 1px solid rgba(0,212,255,0.2);
+    padding: 1.5rem 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .highlight-box p {
+    font-size: 0.88rem;
+    color: var(--text);
+    line-height: 1.8;
+  }
+
+  .highlight-box strong { color: var(--accent); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <a class="nav-logo" href="#">π ACCELERATOR</a>
+  <a class="nav-link" href="#current">Current State</a>
+  <a class="nav-link" href="#phases">SDLC Phases</a>
+  <a class="nav-link" href="#skills">Skills Map</a>
+  <a class="nav-link" href="#roadmap">Roadmap</a>
+  <a class="nav-link" href="#arch">Architecture</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+
+  <div class="hero-eyebrow">Transformation Plan v1.0</div>
+
+  <div class="hero-pi">π Accelerator</div>
+  <div class="hero-title">End-to-End Data Engineering SDLC Platform</div>
+  <p class="hero-sub">
+    From a powerful Snowflake SQL workspace to a complete automation engine covering every phase of the data engineering lifecycle — storyboarding, architecture, development, testing, deployment, versioning, and monitoring — all from one unified platform.
+  </p>
+
+  <div class="hero-badges">
+    <span class="badge badge-blue">Day 1 Onboarding</span>
+    <span class="badge badge-orng">AI-Assisted Development</span>
+    <span class="badge badge-grn">Automated Testing</span>
+    <span class="badge badge-prpl">dbt + Snowflake Native</span>
+    <span class="badge badge-gold">CI/CD + Versioning</span>
+    <span class="badge badge-blue">Data Observability</span>
+    <span class="badge badge-orng">Project Storyboarding</span>
+    <span class="badge badge-grn">Deployment Automation</span>
+  </div>
+</section>
+
+<!-- CURRENT STATE -->
+<section class="section" id="current">
+  <div class="section-label">01 — Assessment</div>
+  <h2 class="section-title">What Exists Today in Pi-Skills</h2>
+  <p class="section-desc">A strong foundation has been built. The gap is everything outside active SQL development — the phases before and after the query editor.</p>
+
+  <div class="current-grid">
+    <div class="current-card card-blue">
+      <h3>⚙️ MCP Bridge <span class="pill pill-done">DONE</span></h3>
+      <p>Python FastAPI server exposing 7 Snowflake tools (run_query, list_tables, describe_table, warehouse_usage…) over HTTP with SSE streaming and SQL safety mode.</p>
+    </div>
+    <div class="current-card card-grn">
+      <h3>🤖 AI Skills System <span class="pill pill-done">DONE</span></h3>
+      <p>15 skill markdown files priming Gemini/GPT personas: analytics engineer, SQL writer, stored procedure developer, query optimizer, security expert, and more.</p>
+    </div>
+    <div class="current-card card-blue">
+      <h3>💬 Chat + SQL Editor <span class="pill pill-done">DONE</span></h3>
+      <p>3-panel layout (LeftPanel / CenterPanel / RightPanel), guided feedback flows, diff viewer for optimizer rewrites, procedure preferences, model switching.</p>
+    </div>
+    <div class="current-card card-grn">
+      <h3>📋 Query Templates <span class="pill pill-done">DONE</span></h3>
+      <p>12 built-in SQL templates across Analytics, ETL, Admin, Debug categories. User can save custom templates. History with pinning and tagging.</p>
+    </div>
+    <div class="current-card card-orng">
+      <h3>🗂️ Project Storyboarding <span class="pill pill-gap">MISSING</span></h3>
+      <p>No requirement capture, story mapping, source system discovery, or data contract drafting. Projects begin cold with no structured intake.</p>
+    </div>
+    <div class="current-card card-orng">
+      <h3>🧪 Testing Automation <span class="pill pill-gap">MISSING</span></h3>
+      <p>No automated test runner, dbt test generator, data quality scorecard, or regression suite. Testing is entirely manual.</p>
+    </div>
+    <div class="current-card card-orng">
+      <h3>🚀 CI/CD & Deployment <span class="pill pill-gap">MISSING</span></h3>
+      <p>No environment management (dev/staging/prod), git integration, pull request automation, schema migration versioning, or deployment approval workflows.</p>
+    </div>
+    <div class="current-card card-orng">
+      <h3>📊 Observability <span class="pill pill-gap">MISSING</span></h3>
+      <p>No pipeline monitoring, data freshness alerting, anomaly detection, lineage visualization, or cost attribution by project/team.</p>
+    </div>
+    <div class="current-card card-prpl">
+      <h3>📄 Documentation Engine <span class="pill pill-part">PARTIAL</span></h3>
+      <p>Skills have rich context but no auto-generated data dictionary, lineage docs, or living documentation synced from actual model definitions.</p>
+    </div>
+    <div class="current-card card-prpl">
+      <h3>🔗 Source Integration <span class="pill pill-part">PARTIAL</span></h3>
+      <p>Snowflake only. No connectors for dbt Cloud, GitHub, Airflow/Prefect, Great Expectations, or other tools in the modern data stack.</p>
+    </div>
+  </div>
+</section>
+
+<!-- INSPIRATION STRIP -->
+<div class="inspo">
+  <div class="inspo-inner">
+    <div class="inspo-quote">
+      Every data project starts with a conversation.<br/>
+      <span>Pi Accelerator makes that conversation the product.</span>
+    </div>
+    <p class="inspo-desc">
+      From the first stakeholder meeting to production deployment and beyond — every artifact, decision, test, and deployment is generated, tracked, and versioned inside one platform that grows with your organization's data maturity.
+    </p>
+  </div>
+</div>
+
+<!-- SDLC PHASES -->
+<section class="section" id="phases">
+  <div class="section-label">02 — Blueprint</div>
+  <h2 class="section-title">The 7 Phases of Pi Accelerator</h2>
+  <p class="section-desc">Each phase maps directly to how data engineering projects actually run — structured as a continuous loop, not a waterfall.</p>
+
+  <div class="phases">
+
+    <!-- PHASE 1 -->
+    <div class="phase">
+      <div class="phase-num p1">01</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Discovery & Storyboarding</div>
+          </div>
+          <span class="badge badge-orng">NEW MODULE</span>
+        </div>
+        <p class="phase-subtitle">
+          The platform starts before any SQL is written. A structured intake flow helps the team capture business requirements, identify source systems, define KPIs, and draft data contracts — all AI-assisted, all versioned, all linked to downstream artifacts.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-new">
+            <h4>📋 Project Canvas <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Structured project intake: business goals, stakeholders, KPI definitions, success criteria, and timeline scoping — all in one form that generates a briefing doc.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🗺️ Source System Mapper <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Inventory source systems, document schemas, connectivity, owner, and SLAs. AI suggests likely data relationships and ingestion patterns.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📝 Story Board Builder <span class="mod-tag tag-new">NEW</span></h4>
+            <p>User story generator for data projects. "As a finance analyst, I want daily revenue by region" → becomes a testable data requirement card.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📄 Data Contract Drafting <span class="mod-tag tag-new">NEW</span></h4>
+            <p>AI-generates source-to-consumer data contracts: schema, grain, SLA, ownership, PII flags — versioned and linked to the model it governs.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔗 Dependency Mapper <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Map upstream data dependencies before building. Flag missing sources early. Generate a readiness score for the project to proceed.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> requirements-analyst.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> data-contract-writer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> source-system-surveyor.skill (NEW)</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> data-architect.skill</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 2 -->
+    <div class="phase">
+      <div class="phase-num p2">02</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Architecture & Data Modeling</div>
+          </div>
+          <span class="badge badge-prpl">EXTEND EXISTING</span>
+        </div>
+        <p class="phase-subtitle">
+          Move from storyboard to schema. The platform generates logical data models, recommends medallion architecture layers, designs star schemas, and produces DDL ready to run against Snowflake — directly from the requirements captured in Phase 1.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-core">
+            <h4>🏗️ ERD Generator <span class="mod-tag tag-new">NEW</span></h4>
+            <p>From source system inventory → auto-generate entity-relationship diagrams. Export as Mermaid, draw.io, or embedded SVG.</p>
+          </div>
+          <div class="module module-core">
+            <h4>📐 Schema Designer <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Interactive DDL editor with AI suggestions. Generates CREATE TABLE, clustering keys, column comments, and RBAC grants in one output.</p>
+          </div>
+          <div class="module module-ext">
+            <h4>🥇 Medallion Planner <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Plan Bronze/Silver/Gold (or Raw/Staging/Marts) layer strategy. Assign models to layers, define materialization strategy and refresh SLAs.</p>
+          </div>
+          <div class="module module-skill">
+            <h4>🔁 SCD Strategy Advisor <span class="mod-tag tag-skill">SKILL</span></h4>
+            <p>For each dimension, recommends SCD Type 1/2/3/4 based on business requirement cards from storyboarding. Generates the MERGE SQL.</p>
+          </div>
+          <div class="module module-core">
+            <h4>⚖️ Naming Convention Enforcer <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Org-level naming rules engine. Validates all schema objects against convention before DDL is executed. Suggests corrections inline.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip"><span class="skill-chip-dot"></span> data-architect.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> analytics-engineer.skill</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> schema-designer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> dimensional-modeler.skill (NEW)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 3 -->
+    <div class="phase">
+      <div class="phase-num p3">03</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Development & Code Generation</div>
+          </div>
+          <span class="badge badge-blue">CORE — ENHANCE</span>
+        </div>
+        <p class="phase-subtitle">
+          This is where Pi-Skills today lives. The enhancement: make it project-aware. SQL, dbt models, stored procedures, and ingestion pipelines are now generated in the context of the project architecture, linked to story cards, and committed to version control automatically.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-ext">
+            <h4>💻 dbt Model Generator <span class="mod-tag tag-ext">EXTEND</span></h4>
+            <p>From schema + requirement → complete dbt staging, intermediate, and mart models with schema YAML, tests, and docs. One click to scaffold an entire dbt project.</p>
+          </div>
+          <div class="module module-ext">
+            <h4>⚡ Stored Procedure Studio <span class="mod-tag tag-ext">EXTEND</span></h4>
+            <p>Existing stored procedure skill gets a visual builder: parameters, logging, error handling, and unit test scaffolding generated alongside the procedure body.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔄 Ingestion Pipeline Builder <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Generate Snowpipe, COPY INTO, or Fivetran-compatible load patterns. Includes schedule design, error logging table, and alerting hook.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🌊 Stream & Task Designer <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Visual CDC pipeline builder using Snowflake Streams + Tasks. AI generates the complete pattern: stream, task graph, and merge target.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📦 Project File Manager <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Organize generated artifacts: dbt project structure, DDL files, procedure files, YAML. Export as zip or push directly to GitHub.</p>
+          </div>
+          <div class="module module-ext">
+            <h4>🔍 SQL Query Optimizer <span class="mod-tag tag-ext">EXTEND</span></h4>
+            <p>Existing optimizer gets query profile integration: pull actual Snowflake query profile JSON and AI explains exactly which operator is the bottleneck.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip"><span class="skill-chip-dot"></span> sql-generation.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> analytics-engineer.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-stored-procedures.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-streams-and-tasks.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-data-ingestion.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-python-integration.skill</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> dbt-developer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> pipeline-architect.skill (NEW)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 4 -->
+    <div class="phase">
+      <div class="phase-num p4">04</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Testing & Data Quality</div>
+          </div>
+          <span class="badge badge-orng">NEW MODULE</span>
+        </div>
+        <p class="phase-subtitle">
+          Automated test generation, execution, and reporting baked into the platform. Every generated model comes with a test suite. Every test run produces a quality scorecard. No more manual validation or "it looks right" sign-offs.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-new">
+            <h4>🧪 dbt Test Generator <span class="mod-tag tag-new">NEW</span></h4>
+            <p>From model YAML → auto-generate not_null, unique, accepted_values, relationships, and custom singular tests. Produces a complete test suite for every model, scaffolded to run immediately.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📊 Data Quality Scorecard <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Run tests against Snowflake and visualize results: pass/fail/warn per model, column-level quality heatmap, trend over time. Exportable as PDF for stakeholders.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔍 Reconciliation Engine <span class="mod-tag tag-new">NEW</span></h4>
+            <p>AI-generates source-to-mart reconciliation queries. Validates row counts, sums, and key business metrics match between layers. Flags discrepancies automatically.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📈 Anomaly Detector <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Statistical checks on column distributions: null rate shifts, row count deltas, value range drift. Alerts on deviations without needing manual thresholds.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔁 Regression Suite Runner <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Before any deployment, run a regression suite that compares new results against a golden dataset snapshot. Blocks promotion if critical metrics shift.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> data-quality-engineer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> test-automation.skill (NEW)</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> analytics-engineer.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-query-optimizer.skill</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 5 -->
+    <div class="phase">
+      <div class="phase-num p5">05</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Documentation & Knowledge Base</div>
+          </div>
+          <span class="badge badge-gold">AUTO-GENERATED</span>
+        </div>
+        <p class="phase-subtitle">
+          Documentation that writes itself. Every model, pipeline, and data contract generates living documentation. The platform maintains a searchable data dictionary and lineage graph that stays in sync with actual code — not Confluence pages nobody updates.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-new">
+            <h4>📚 Living Data Dictionary <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Auto-synced from dbt YAML and Snowflake INFORMATION_SCHEMA. Every table, column, and metric has a description, owner, PII flag, and freshness SLA. Searchable by any team member.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔗 Lineage Visualizer <span class="mod-tag tag-new">NEW</span></h4>
+            <p>End-to-end lineage graph from raw source to BI dashboard. Click any node to see column-level lineage, tests, and last refresh time. Powered by dbt manifest + Snowflake query history.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📋 Project Runbook Generator <span class="mod-tag tag-new">NEW</span></h4>
+            <p>From storyboard + architecture + models → generate a complete project runbook: setup guide, dependency list, operational procedures, and incident playbook.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🏷️ Semantic Layer Publisher <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Generate MetricFlow YAML definitions for dbt Semantic Layer. Publish metrics, dimensions, and entities to a governed catalog accessible by BI tools.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> documentation-writer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> semantic-layer-designer.skill (NEW)</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> analytics-engineer.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-governance-and-compliance.skill</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 6 -->
+    <div class="phase">
+      <div class="phase-num p6">06</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Deployment & CI/CD</div>
+          </div>
+          <span class="badge badge-orng">NEW MODULE</span>
+        </div>
+        <p class="phase-subtitle">
+          From dev environment to production with confidence. The platform manages environments, generates GitHub Actions workflows, handles schema migrations, and enforces promotion gates — so no one is hand-running SQL in production at 11pm.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-new">
+            <h4>🌿 Environment Manager <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Define dev / staging / prod environments with separate Snowflake roles and schemas. Switch context in one click. All queries and deployments are environment-aware.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔀 GitHub Actions Generator <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Generate complete CI/CD YAML: dbt run + test on PR, slim CI for changed models only, prod deployment on merge, Slack notification on failure.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📦 Schema Migration Engine <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Track schema changes as versioned migration scripts (like Flyway/Liquibase). Generate ALTER TABLE migrations from schema diffs. Never lose track of what changed and when.</p>
+          </div>
+          <div class="module module-new">
+            <h4>✅ Promotion Gate <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Configurable quality gates for staging → prod: all dbt tests pass, freshness SLAs met, reconciliation checks green, approver sign-off received.</p>
+          </div>
+          <div class="module module-new">
+            <h4>🔄 dbt Cloud Integration <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Trigger dbt Cloud jobs from the platform. View run logs, model timing, and test results inline. No context switching to dbt Cloud UI.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> devops-engineer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> release-manager.skill (NEW)</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-security.skill</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-governance-and-compliance.skill</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PHASE 7 -->
+    <div class="phase">
+      <div class="phase-num p7">07</div>
+      <div class="phase-body">
+        <div class="phase-header">
+          <div>
+            <div class="phase-name">Monitoring, Versioning & Observability</div>
+          </div>
+          <span class="badge badge-orng">NEW MODULE</span>
+        </div>
+        <p class="phase-subtitle">
+          The platform doesn't stop at deployment. Ongoing observability: pipeline health, freshness SLAs, cost attribution, warehouse utilization, and anomaly alerts all flow back into the same platform that built the pipelines — closing the loop completely.
+        </p>
+        <div class="phase-modules">
+          <div class="module module-new">
+            <h4>📡 Pipeline Health Monitor <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Real-time dashboard of all pipeline statuses: last run, duration, rows processed, error rate. Powered by Snowflake QUERY_HISTORY and TASK_HISTORY views.</p>
+          </div>
+          <div class="module module-new">
+            <h4>⏰ Freshness SLA Tracker <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Every table has a defined freshness SLA from the data contract. The monitor checks actual last-updated timestamps and fires alerts on breaches before users notice.</p>
+          </div>
+          <div class="module module-new">
+            <h4>💰 Cost Attribution Dashboard <span class="mod-tag tag-new">NEW</span></h4>
+            <p>Break down Snowflake credit consumption by project, team, pipeline, and model. Identify top cost drivers and suggest optimizations automatically.</p>
+          </div>
+          <div class="module module-new">
+            <h4>📌 Version Control Timeline <span class="mod-tag tag-new">NEW</span></h4>
+            <p>View the full history of every model, skill, and schema — what changed, when, by whom, and what test results looked like at each version. One-click rollback.</p>
+          </div>
+          <div class="module module-ext">
+            <h4>🚨 Alert & Incident Manager <span class="mod-tag tag-new">NEW</span></h4>
+            <p>When a pipeline fails or SLA is breached, create an incident card linked to the affected model, auto-generate a diagnosis prompt, and log the resolution for future runbooks.</p>
+          </div>
+        </div>
+        <div class="phase-skills">
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-warehouses.skill</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> observability-engineer.skill (NEW)</div>
+          <div class="skill-chip new"><span class="skill-chip-dot"></span> incident-responder.skill (NEW)</div>
+          <div class="skill-chip"><span class="skill-chip-dot"></span> snowflake-query-optimizer.skill</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- SKILLS MAP -->
+<section class="section" id="skills">
+  <div class="section-label">03 — Skills Expansion</div>
+  <h2 class="section-title">Complete AI Skills Inventory</h2>
+  <p class="section-desc">Existing skills cover the development phase well. New skills cover the full SDLC lifecycle. Each skill is a rich .md file that transforms the AI into a domain expert for that phase.</p>
+
+  <div class="skills-grid">
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent)">Phase 1 — Discovery</div>
+      <h4>Requirements Analyst <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Captures business requirements, converts them to testable data stories, and generates the project canvas document.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent)">Phase 1 — Discovery</div>
+      <h4>Data Contract Writer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Drafts source-to-consumer data contracts: schema, grain, SLA, PII classification, and ownership in structured YAML.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent)">Phase 1 — Discovery</div>
+      <h4>Source System Surveyor <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Interviews teams to inventory source systems, documents connectivity patterns, and assesses data readiness.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent2)">Phase 2 — Architecture</div>
+      <h4>Dimensional Modeler <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Designs star schemas, recommends fact/dim boundaries, grain definitions, and conformed dimension strategies.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent2)">Phase 2 — Architecture</div>
+      <h4>Schema Designer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Generates DDL with clustering, column ordering, column comments, and RBAC grants from architectural diagrams.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent2)">Phase 2 — Architecture</div>
+      <h4>Data Architect <span class="pill pill-done" style="font-size:0.55rem">EXISTS</span></h4>
+      <p>Designs scalable data models, warehouse layout, and domain boundaries. Enhanced with Phase 1 context awareness.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent4)">Phase 3 — Development</div>
+      <h4>dbt Developer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Builds complete dbt projects: model files, schema YAML, sources, macros, packages, and incremental strategies.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent4)">Phase 3 — Development</div>
+      <h4>Pipeline Architect <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Designs end-to-end ingestion + transformation pipeline patterns with Snowpipe, Streams, Tasks, and dbt.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent4)">Phase 3 — Development</div>
+      <h4>Analytics Engineer <span class="pill pill-done" style="font-size:0.55rem">EXISTS</span></h4>
+      <p>Transforms raw data into analytics-ready models. Extended with project context from storyboard and architecture phases.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent4)">Phase 3 — Development</div>
+      <h4>SQL Generation <span class="pill pill-done" style="font-size:0.55rem">EXISTS</span></h4>
+      <p>Expert SQL generation across all dialects. Extended with schema context auto-injection from Phase 2 designs.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent4)">Phase 3 — Development</div>
+      <h4>Snowflake SP Developer <span class="pill pill-done" style="font-size:0.55rem">EXISTS</span></h4>
+      <p>Stored procedures in SQL/JS/Python with logging and unit test generation. Now includes test scaffolding output.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent3)">Phase 4 — Testing</div>
+      <h4>Data Quality Engineer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Generates comprehensive dbt test suites, reconciliation queries, and quality scorecards. Classifies tests by severity.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent3)">Phase 4 — Testing</div>
+      <h4>Test Automation Engineer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Designs regression suites, golden dataset comparisons, and CI test execution strategies for data pipelines.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--gold)">Phase 5 — Docs</div>
+      <h4>Documentation Writer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Auto-generates data dictionaries, runbooks, operational docs, and semantic layer definitions from code artifacts.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--gold)">Phase 5 — Docs</div>
+      <h4>Semantic Layer Designer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Designs MetricFlow semantic models, dimensions, entities, and metric definitions for dbt Semantic Layer.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent)">Phase 6 — Deploy</div>
+      <h4>DevOps Engineer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Generates GitHub Actions CI/CD workflows, dbt project deployment scripts, environment configs, and Makefile targets.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent)">Phase 6 — Deploy</div>
+      <h4>Release Manager <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Manages promotion gates, change logs, approvals, and rollback procedures across environments.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent2)">Phase 7 — Monitor</div>
+      <h4>Observability Engineer <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Designs freshness monitors, anomaly detectors, SLA alerting, and cost attribution frameworks for data platforms.</p>
+    </div>
+    <div class="skill-card">
+      <div class="skill-phase-tag" style="color:var(--accent2)">Phase 7 — Monitor</div>
+      <h4>Incident Responder <span class="pill pill-gap" style="font-size:0.55rem">NEW</span></h4>
+      <p>Guides teams through pipeline incidents: diagnosis, root cause analysis, fix generation, and runbook update.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section class="section" id="arch">
+  <div class="section-label">04 — Architecture</div>
+  <h2 class="section-title">Evolved Technical Architecture</h2>
+  <p class="section-desc">The existing React + Python MCP foundation scales into a multi-service platform. Each new module adds a focused backend service, not a monolith.</p>
+
+  <div class="arch-wrap">
+    <div class="arch-title">// SYSTEM LAYERS — ORANGE = NEW, BLUE = EXISTS</div>
+    <div class="arch-layers">
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">UI SURFACES</div>
+        <div class="arch-items">
+          <span class="arch-item exists">SQL Workspace (existing)</span>
+          <span class="arch-item new">Project Storyboard</span>
+          <span class="arch-item new">Schema Designer</span>
+          <span class="arch-item new">Test Runner Dashboard</span>
+          <span class="arch-item new">Lineage Explorer</span>
+          <span class="arch-item new">Pipeline Monitor</span>
+          <span class="arch-item new">Deploy Console</span>
+          <span class="arch-item new">Cost Dashboard</span>
+        </div>
+      </div>
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">STATE MANAGEMENT</div>
+        <div class="arch-items">
+          <span class="arch-item exists">Zustand Store (existing)</span>
+          <span class="arch-item new">Project Context Store</span>
+          <span class="arch-item new">Artifact Registry</span>
+          <span class="arch-item new">Deployment State</span>
+          <span class="arch-item new">Monitor State</span>
+        </div>
+      </div>
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">AI LAYER</div>
+        <div class="arch-items">
+          <span class="arch-item exists">Gemini / GPT Routing (existing)</span>
+          <span class="arch-item new">Skill Orchestrator</span>
+          <span class="arch-item new">Multi-Skill Chain</span>
+          <span class="arch-item new">Context Memory (project-scoped)</span>
+          <span class="arch-item new">Artifact Generator</span>
+        </div>
+      </div>
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">MCP SERVICES</div>
+        <div class="arch-items">
+          <span class="arch-item exists">Snowflake MCP Bridge (existing)</span>
+          <span class="arch-item new">dbt Cloud MCP</span>
+          <span class="arch-item new">GitHub MCP</span>
+          <span class="arch-item new">Test Runner MCP</span>
+          <span class="arch-item new">Observability MCP</span>
+          <span class="arch-item new">Migration Engine MCP</span>
+        </div>
+      </div>
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">DATA INTEGRATIONS</div>
+        <div class="arch-items">
+          <span class="arch-item exists">Snowflake (existing)</span>
+          <span class="arch-item new">dbt Cloud API</span>
+          <span class="arch-item new">GitHub API</span>
+          <span class="arch-item new">INFORMATION_SCHEMA</span>
+          <span class="arch-item new">ACCOUNT_USAGE views</span>
+          <span class="arch-item new">Airflow / Prefect (optional)</span>
+          <span class="arch-item new">Slack Webhooks</span>
+        </div>
+      </div>
+
+      <div class="arch-layer">
+        <div class="arch-layer-label">STORAGE</div>
+        <div class="arch-items">
+          <span class="arch-item exists">In-memory / localStorage (existing)</span>
+          <span class="arch-item new">Project DB (SQLite → PostgreSQL)</span>
+          <span class="arch-item new">Artifact File Store</span>
+          <span class="arch-item new">Version History</span>
+          <span class="arch-item new">Test Result History</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <h3 style="font-family:var(--font-head);font-size:1.3rem;font-weight:700;color:#fff;margin-bottom:1.5rem;letter-spacing:-0.02em;">SDLC Coverage Comparison</h3>
+  <table class="comparison">
+    <thead>
+      <tr>
+        <th>SDLC Phase</th>
+        <th>Pi-Skills Today</th>
+        <th>Pi Accelerator</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Discovery & Storyboarding</td>
+        <td><span class="cross">✗</span> Not covered</td>
+        <td><span class="check">✓</span> Project canvas, story builder, source mapper</td>
+      </tr>
+      <tr>
+        <td>Architecture & Data Modeling</td>
+        <td><span class="part">◑</span> Skill only (text output)</td>
+        <td><span class="check">✓</span> ERD generator, schema designer, DDL executor</td>
+      </tr>
+      <tr>
+        <td>Development</td>
+        <td><span class="check">✓</span> SQL, procedures, optimizer</td>
+        <td><span class="check">✓</span> + dbt scaffolding, pipelines, project file manager</td>
+      </tr>
+      <tr>
+        <td>Testing & Data Quality</td>
+        <td><span class="cross">✗</span> Manual only</td>
+        <td><span class="check">✓</span> Test generator, scorecard, reconciliation, anomaly detection</td>
+      </tr>
+      <tr>
+        <td>Documentation</td>
+        <td><span class="part">◑</span> Skills generate text, not synced</td>
+        <td><span class="check">✓</span> Living data dictionary, lineage graph, runbooks</td>
+      </tr>
+      <tr>
+        <td>Deployment & CI/CD</td>
+        <td><span class="cross">✗</span> Not covered</td>
+        <td><span class="check">✓</span> Environment manager, GitHub Actions gen, migration engine</td>
+      </tr>
+      <tr>
+        <td>Monitoring & Observability</td>
+        <td><span class="part">◑</span> Warehouse monitor only</td>
+        <td><span class="check">✓</span> Pipeline health, freshness SLAs, cost attribution, alerting</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- ROADMAP -->
+<section class="section" id="roadmap">
+  <div class="section-label">05 — Roadmap</div>
+  <h2 class="section-title">Implementation Roadmap</h2>
+  <p class="section-desc">Six sprints, each delivering a usable increment. Start with the highest-leverage gaps, build on the existing foundation, ship continuously.</p>
+
+  <div class="roadmap">
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-blue">SPRINT 1</span>
+        <span class="sprint-title">Project Foundation</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Add project-level context store: name, description, source systems, active phase</div>
+        <div class="sprint-item">Build Project Canvas UI component — structured intake form</div>
+        <div class="sprint-item">Create requirements-analyst.skill.md and data-contract-writer.skill.md</div>
+        <div class="sprint-item">Persist project context in Zustand + localStorage so all skills can access it</div>
+        <div class="sprint-item">Add "Active Project" header bar that shows current phase</div>
+        <div class="sprint-item">Build Story Board builder — user stories → data requirement cards</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: Teams can onboard a project in 30 minutes with AI-guided intake</div>
+    </div>
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-prpl">SPRINT 2</span>
+        <span class="sprint-title">Architecture & Schema</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Build Schema Designer panel — interactive DDL editor with AI inline suggestions</div>
+        <div class="sprint-item">Add ERD auto-generator from schema JSON (rendered as Mermaid or SVG)</div>
+        <div class="sprint-item">Create dimensional-modeler.skill.md and schema-designer.skill.md</div>
+        <div class="sprint-item">Naming convention engine — validate object names before DDL execution</div>
+        <div class="sprint-item">MCP tool: execute DDL against Snowflake with dry-run mode</div>
+        <div class="sprint-item">Medallion layer planner — assign models to Bronze/Silver/Gold layers</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: Architecture decisions are captured, validated, and executable in Snowflake</div>
+    </div>
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-orng">SPRINT 3</span>
+        <span class="sprint-title">dbt Integration & Testing</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Build dbt model generator — from schema + requirement → complete staging/mart SQL + YAML</div>
+        <div class="sprint-item">Create dbt-developer.skill.md with full project structure guidance</div>
+        <div class="sprint-item">dbt Test Generator — auto-write test suite for every generated model</div>
+        <div class="sprint-item">MCP tool: run dbt tests against Snowflake, return pass/fail/warn JSON</div>
+        <div class="sprint-item">Build Data Quality Scorecard UI — heatmap of test results per model</div>
+        <div class="sprint-item">Create data-quality-engineer.skill.md</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: Every generated model ships with a test suite that runs in one click</div>
+    </div>
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-grn">SPRINT 4</span>
+        <span class="sprint-title">Documentation & Lineage</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Build Living Data Dictionary — synced from dbt YAML + Snowflake INFORMATION_SCHEMA</div>
+        <div class="sprint-item">Lineage Visualizer — DAG rendering of model dependencies</div>
+        <div class="sprint-item">Project Runbook Generator — AI writes the full operational document</div>
+        <div class="sprint-item">Create documentation-writer.skill.md and semantic-layer-designer.skill.md</div>
+        <div class="sprint-item">MetricFlow YAML generator for dbt Semantic Layer</div>
+        <div class="sprint-item">Export center: PDF runbook, zip of all artifacts, dbt project structure</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: Projects are fully documented before they go to production</div>
+    </div>
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-gold">SPRINT 5</span>
+        <span class="sprint-title">CI/CD & Deployment</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Environment Manager: dev / staging / prod context switching</div>
+        <div class="sprint-item">GitHub Actions generator for dbt CI/CD pipelines</div>
+        <div class="sprint-item">Schema migration engine: versioned ALTER scripts from schema diffs</div>
+        <div class="sprint-item">Promotion gate UI: checklist of quality gates before prod deploy</div>
+        <div class="sprint-item">dbt Cloud API integration: trigger jobs and view run logs inline</div>
+        <div class="sprint-item">Create devops-engineer.skill.md and release-manager.skill.md</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: One-click deployment with automated quality gates and version tracking</div>
+    </div>
+
+    <div class="roadmap-sprint">
+      <div class="sprint-header">
+        <span class="sprint-num badge badge-blue">SPRINT 6</span>
+        <span class="sprint-title">Observability & Loop Closure</span>
+      </div>
+      <div class="sprint-items">
+        <div class="sprint-item">Pipeline Health Monitor dashboard — per-pipeline status, duration, row counts</div>
+        <div class="sprint-item">Freshness SLA Tracker — breach alerts from data contracts defined in Sprint 1</div>
+        <div class="sprint-item">Cost Attribution Dashboard — credits by project/team/pipeline</div>
+        <div class="sprint-item">Version Control Timeline — full model history with one-click rollback</div>
+        <div class="sprint-item">Incident Manager — link failures to models, auto-diagnose, update runbook</div>
+        <div class="sprint-item">Create observability-engineer.skill.md and incident-responder.skill.md</div>
+      </div>
+      <div class="sprint-goal">🎯 Output: The loop closes — production monitoring feeds back into the same platform that built the pipelines</div>
+    </div>
+
+  </div>
+</section>
+
+<!-- CLOSING INSPIRATION -->
+<div class="inspo" style="margin-top:0;">
+  <div class="inspo-inner">
+    <div class="inspo-quote">
+      <span>π Accelerator</span> is not a tool.<br/>It is the operating system for data engineering.
+    </div>
+    <p class="inspo-desc">
+      From the first stakeholder conversation to a production pipeline running reliably at scale — every decision, artifact, test, and deployment lives in one platform. It reduces project setup from weeks to hours, eliminates documentation debt, catches quality issues before production, and gives every data engineer on your team the leverage of a senior practitioner.
+      <br/><br/>
+      This is how the next generation of data projects gets built.
+    </p>
+    <br/>
+    <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:1rem;margin-top:1.5rem;">
+      <span class="badge badge-blue">≥ 70% reduction in project setup time</span>
+      <span class="badge badge-grn">100% test coverage on every generated model</span>
+      <span class="badge badge-orng">Zero undocumented deployments</span>
+      <span class="badge badge-prpl">Full SDLC in one platform</span>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <strong>π ACCELERATOR</strong> — End-to-End Data Engineering SDLC Platform &nbsp;|&nbsp; Built on Pi-Skills &nbsp;|&nbsp; Powered by Snowflake + dbt + AI
+</footer>
+
+</body>
+</html>

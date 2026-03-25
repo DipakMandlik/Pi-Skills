@@ -1,0 +1,16 @@
+﻿[
+  {
+    "external_id": "00u_12345",
+    "email": "alice@company.com",
+    "display_name": "Alice Doe",
+    "platform_role": "DATA_ENGINEER",
+    "is_active": true
+  },
+  {
+    "external_id": "00u_98765",
+    "email": "bob@company.com",
+    "display_name": "Bob Smith",
+    "platform_role": "VIEWER",
+    "is_active": true
+  }
+]

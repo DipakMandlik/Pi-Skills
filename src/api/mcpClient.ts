@@ -35,11 +35,18 @@ export class MCPClient {
     const timeoutMs = options?.timeoutMs ?? this.timeoutMs;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), timeoutMs);
+    const token = window.localStorage.getItem('auth_token');
+
+    const requestHeaders = new Headers(init.headers || {});
+    if (token && !requestHeaders.has('Authorization')) {
+      requestHeaders.set('Authorization', `Bearer ${token}`);
+    }
 
     let response: Response;
     try {
       response = await fetch(`${this.baseUrl}${path}`, {
         ...init,
+        headers: requestHeaders,
         signal: controller.signal,
       });
     } catch (error) {

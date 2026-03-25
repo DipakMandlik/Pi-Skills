@@ -13,7 +13,7 @@ import type {
 } from '../types';
 
 const formatTableSelection = (database: string, schema: string, table: string) => `${database}.${schema}.${table}`;
-const EXPLORER_CACHE_KEY = 'mcp-explorer-cache-v1';
+const EXPLORER_CACHE_KEY_PREFIX = 'mcp-explorer-cache-v1';
 const EXPLORER_FOCUS_DATABASE = (import.meta as any).env?.VITE_EXPLORER_DATABASE?.trim?.() || '';
 const LOADING_LINES = [
   'Teaching micro-partitions to dance...',
@@ -83,6 +83,8 @@ export function RightPanel() {
   const [maxRows, setMaxRows] = useState(1000);
   const [loadingLineIndex, setLoadingLineIndex] = useState(0);
 
+  const explorerCacheKey = `${EXPLORER_CACHE_KEY_PREFIX}:${localStorage.getItem('sf_account') || 'unknown'}:${localStorage.getItem('sf_username') || 'unknown'}:${localStorage.getItem('sf_role') || 'unknown'}`;
+
   const SCHEMA_CONCURRENCY = 4;
   const TABLE_CONCURRENCY = 6;
 
@@ -105,7 +107,7 @@ export function RightPanel() {
 
   useEffect(() => {
     try {
-      const cachedRaw = window.localStorage.getItem(EXPLORER_CACHE_KEY);
+      const cachedRaw = window.localStorage.getItem(explorerCacheKey);
       if (cachedRaw) {
         const cached = JSON.parse(cachedRaw) as ExplorerDatabase[];
         if (Array.isArray(cached) && cached.length > 0) {
@@ -199,7 +201,7 @@ export function RightPanel() {
           setExplorerData(explorer);
           setHydratedDatabases(explorer.map((db) => db.name));
           try {
-            window.localStorage.setItem(EXPLORER_CACHE_KEY, JSON.stringify(explorer));
+            window.localStorage.setItem(explorerCacheKey, JSON.stringify(explorer));
           } catch {
             // Ignore cache write failures.
           }
@@ -221,7 +223,7 @@ export function RightPanel() {
     return () => {
       isMounted = false;
     };
-  }, [explorerReloadToken]);
+  }, [explorerCacheKey, explorerReloadToken]);
 
   const handleReloadExplorer = () => {
     setExplorerReloadToken((value) => value + 1);

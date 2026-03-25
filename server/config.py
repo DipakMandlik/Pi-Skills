@@ -14,6 +14,12 @@ class Settings:
     mcp_port: int
     mcp_log_level: str
     mcp_cors_origins: list[str]
+    mcp_auth_required: bool
+    mcp_rate_limit_per_minute: int
+    mcp_max_arguments_bytes: int
+    mcp_max_argument_length: int
+    mcp_session_database_url: str
+    jwt_secret: str
     sql_safety_mode: str
     sql_default_row_limit: int
     sql_max_rows: int
@@ -42,6 +48,35 @@ def _to_bool(name: str, fallback: bool) -> bool:
     return raw in {"1", "true", "yes", "y", "on"}
 
 
+def _jwt_secret_remediation() -> str:
+    return (
+        "Set JWT_SECRET in .env.local using a 64-char hex value. "
+        "Generate with: python -c \"import secrets; print(secrets.token_hex(32))\". "
+        "Then restart MCP server."
+    )
+
+
+def validate_jwt_secret(secret: str) -> None:
+    if not secret:
+        raise ValueError(
+            "startup_preflight_failed code=JWT_SECRET_MISSING "
+            "message='JWT_SECRET must be set' "
+            f"remediation='{_jwt_secret_remediation()}'"
+        )
+    if secret == "change-me-in-production-please":
+        raise ValueError(
+            "startup_preflight_failed code=JWT_SECRET_INSECURE_DEFAULT "
+            "message='JWT_SECRET must not use the insecure default value' "
+            f"remediation='{_jwt_secret_remediation()}'"
+        )
+    if len(secret) < 32:
+        raise ValueError(
+            "startup_preflight_failed code=JWT_SECRET_TOO_SHORT "
+            "message='JWT_SECRET must be at least 32 characters' "
+            f"remediation='{_jwt_secret_remediation()}'"
+        )
+
+
 def load_settings() -> Settings:
     cors_raw = os.getenv(
         "MCP_CORS_ORIGINS",
@@ -54,6 +89,15 @@ def load_settings() -> Settings:
         mcp_port=_to_int("MCP_PORT", 5000),
         mcp_log_level=os.getenv("MCP_LOG_LEVEL", "INFO"),
         mcp_cors_origins=cors_origins,
+        mcp_auth_required=_to_bool("MCP_AUTH_REQUIRED", True),
+        mcp_rate_limit_per_minute=_to_int("MCP_RATE_LIMIT_PER_MINUTE", 60),
+        mcp_max_arguments_bytes=_to_int("MCP_MAX_ARGUMENTS_BYTES", 50000),
+        mcp_max_argument_length=_to_int("MCP_MAX_ARGUMENT_LENGTH", 10000),
+        mcp_session_database_url=os.getenv(
+            "MCP_SESSION_DATABASE_URL",
+            "sqlite:///./server_mcp_sessions.db",
+        ).strip(),
+        jwt_secret=os.getenv("JWT_SECRET", "").strip(),
         sql_safety_mode=os.getenv("SQL_SAFETY_MODE", "dev").lower(),
         sql_default_row_limit=_to_int("SQL_DEFAULT_ROW_LIMIT", 1000),
         sql_max_rows=_to_int("SQL_MAX_ROWS", 5000),
